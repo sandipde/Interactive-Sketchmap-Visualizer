@@ -2,13 +2,15 @@
 
 The code to generate Interactive Sketchmap visualizer using bokeh. 
 To see an demo version try : https://sketchmap.herokuapp.com/
-To know about sketchmap go to http:/sketchmap.org/
+To know about sketchmap go to http://sketchmap.org/
 
 
 
 # Usage
 
  bokeh serve example-app --show --args -u 1:2:3 -ps 10 
+ 
+ It means start bokeh server to plot using the first two columns in the COLVAR file present in example-app/data/ folder. Use 3rd column as color and pointsize set to 10.  
 
 To use your own data you have to do the following 
 cp -r example-app  <your-app>
