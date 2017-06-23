@@ -24,9 +24,10 @@ from os.path import dirname, join
 from smaplib import *
 from bokeh.events import ButtonClick
 from bokeh.models.widgets import DataTable,TableColumn
-def main(dfile,pcol,appname,title='Sketch-map',pointsize=10):
-    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps
+def main(dfile,pcol,appname,title='Sketch-map',pointsize=10,jmol_settings=""):
+    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings
     ps=pointsize
+    jmolsettings=jmol_settings
 #initialise data
     datafile=join(dirname(__file__), 'data', dfile)
     cv=smap(name=title)
@@ -83,7 +84,7 @@ def create_buttons():
     return play_widget,download_widget
 
 def create_plot():
-    global cv,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,controls,ps
+    global cv,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,controls,ps,jmolsettings
 # Set up main plot
     p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=ps,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_height=170)
 
@@ -112,7 +113,7 @@ def create_plot():
        var str = "" + inds;
        var pad = "0000";
        var indx = pad.substring(0, pad.length - str.length) + str;
-       var settings=  " " 
+       var settings= "%s" ; 
        var file= "javascript:Jmol.script(jmolApplet0," + "'load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
@@ -121,17 +122,18 @@ def create_plot():
        """ 
 
 # Set up Slider
+    print jmolsettings
     iold=0  
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
     slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("value","","",appname))
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("value","","",jmolsettings,appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("selected['1d'].indices",".min()","s.set('value', inds)",appname))
+         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("selected['1d'].indices",".min()","s.set('value', inds)",jmolsettings,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -221,11 +223,12 @@ parser = argparse.ArgumentParser(description="A python script to generate intera
 parser.add_argument("-smapdata", default='COLVAR',help="The name of the data file to use in data directory")
 parser.add_argument("-u",  type=str, default='1:2:3',help="columns of the data file to plot eg. -u 1:2:3:4 to plot 1st column vs 2nd column. color the data using 3rd coloumn and 4th column to varry the point size (optional)")
 parser.add_argument("-ps",  type=float, default='10',help="point size")
+parser.add_argument("-jmol",  type=str, default=" ",help="optional: parameters to be used for jmol")
 #parser.add_argument("-t",  type=str, default='',help="Title of the plot")
 args = parser.parse_args()
 pcol = map(int,args.u.split(':'))
 
-lay=main(dfile='COLVAR',pcol=pcol,appname=appname,pointsize=args.ps)
+lay=main(dfile='COLVAR',pcol=pcol,appname=appname,pointsize=args.ps,jmol_settings=args.jmol)
 curdoc().add_root(lay)
 curdoc().template_variables["js_files"] = [appname+"/static/jmol/JSmol.min.js"]
 css=[]
@@ -233,4 +236,5 @@ for f in ["w3","introjs"]:
   css.append(appname+"/static/css/"+f+'.css')
 curdoc().template_variables["css_files"] = css
 curdoc().template_variables["appname"] = [appname]
+curdoc().template_variables["jmolsettings"] = args.jmol
 curdoc().title = "Interactive Sketchmap Visualizer"
