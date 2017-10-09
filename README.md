@@ -42,13 +42,16 @@ You need python 2.7 Python 3 is not supported yet
 The data file coloumn names should not contain wild characters. For safety only use "_" as separator eg . atomic_energy
 
 # Dependencies
+Python 2.7 
 
-argparse
+    argparse
 
-tornado==4.4.3
+    tornado==4.4.3
 
-numpy
+    numpy
 
-bokeh==0.12.5
+    bokeh==0.12.5
 
-pandas
+    pandas
+
+gfortran 
