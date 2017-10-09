@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="Author" content="Sandip De" />
+<title>The Jmol Viewer</title>
+<script type="text/javascript" src="./jmol/JSmol.min.js"></script>
+<style type="text/css">
+/* These are important, dont change: */
+
+html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
+.JmolPanels { position: absolute; overflow: hidden; }
+.textPanels { position: absolute; overflow: auto; }
+
+/* Dont add margin nor padding to textPane; if needed, use an inner div with desired style (like contents below) */
+
+/* These are aesthetic, can be customized: */
+
+.content { padding: 0.5em 1ex; }
+</style>
+
+<script type="text/javascript">
+//  	USER'S SETTINGS: 
+// sets the side of the page that the model appears on,you can set this to "top" or "bottom"
+var side = "top"	
+// you can set this to any integer, meaning percent of window height assigned to Jmol panel
+var h = 80		
+//      --------------
+
+var cssTx = '<style type="text/css">'
+cssTx += '#JmolPane  { left:0px; width:100%; top:' + ( (side=="top") ? "0px" : ((100-h)+"%") ) + '; height:' + h + '%;} '
+cssTx += '#mainPane  { left:0px; width:100%; top:' + ( (side=="top") ? (h+"%") : "0px" ) + '; height:' + (100-h) + '%;} '
+cssTx += '</style>'
+document.writeln(cssTx)
+
+var jmolAppletA;
+
+// logic is set by indicating order of USE -- default is HTML5 for this test page, though
+var use = "HTML5" // JAVA HTML5 WEBGL IMAGE  are all otions
+var s = document.location.search;
+
+Jmol.debugCode = (s.indexOf("debugcode") >= 0);
+
+var xxxx = document.location.search
+
+var Info0 = {
+  width:  "100%",
+  height: "100%",
+  use: "HTML5",
+  debug: false,
+  color: "0xFFFFFF",
+  j2sPath: "./jmol/j2s", // this needs to point to where the j2s directory is.
+  jarPath: "./jmol/java",// this needs to point to where the java directory is.
+  jarFile: "JmolAppletSigned.jar",
+  isSigned: true,
+  serverURL: "./jmol/php/jsmol.php",
+  script: opener.JSmolCloneData.state.replace(/zoomLarge true/i,'zoomLarge false'),
+  use: opener.JSmolCloneData.type ,
+  disableJ2SLoadMonitor: true,
+  disableInitialConsole: true,
+  allowJavaScript: true
+};
+var inds=localStorage.getItem("index");
+</script>
+</head>
+
+<body>
+
+<div id="JmolPane" class="JmolPanels">
+<script type="text/javascript">
+  jmolAppletA = Jmol.getApplet("jmolAppletA", Info0)
+  Jmol.script(JSmolClone,"set platformSpeed " + opener.JSmolCloneData.platformSpeed);
+</script>
+</div>
+
+<div id="mainPane" class="textPanels">
+	<div class="content">
+<script type="text/javascript">
+  Jmol.jmolHtml("<b> Selected frame: "+ inds +"</b> <br> ");
+  Jmol.jmolHtml("<b>Schemes:</b> ");
+  Jmol.jmolRadioGroup(jmolAppletA,[
+      ['cartoons off; trace off; rockets off; select visible; spacefill 20%; wireframe 0.15;', 'Ball &amp; Stick', 'checked'],
+      ['cartoons off; trace off; rockets off; select visible; spacefill 0%; wireframe 0.15;', 'Tube'],
+      ['cartoons off; trace off; rockets off; select visible; spacefill 0%; wireframe 0.05;', 'Wireframe'],
+      ['cartoons off; trace off; rockets off; select visible; spacefill 100%; wireframe 0.05;', 'Space filling'],
+      ], '&nbsp;&nbsp;', 'scheme1');
+  Jmol.jmolHtml("<br> <b>Measure:</b> ");
+  Jmol.jmolRadioGroup(jmolAppletA,[
+      ['set measurement ANGSTROMS; set picking MEASURE DISTANCE; set pickingStyle MEASURE ON;', 'Distance'],
+      ['set picking MEASURE ANGLE; set pickingStyle MEASURE ON;', 'Angle'],
+      ['set picking MEASURE TORSION; set pickingStyle MEASURE ON;', 'Torsion'],
+      ['set pickingStyle MEASURE OFF;', 'Off', 'checked'] ], '&nbsp;&nbsp;');
+  Jmol.jmolHtml("&nbsp;&nbsp;&nbsp;<b>3D:</b> ");
+  Jmol.jmolMenu(jmolAppletA,[
+      ['background black; stereo off;', ' Stereo 3D off ', 'checked'],
+      ['background grey; stereo REDCYAN;', 'Red / Cyan'],
+      ['background grey; stereo REDBLUE;', 'Red / Blue'],
+      ['background grey; stereo REDGREEN;', 'Red / Green'],
+      ['background grey; stereo -5;', 'Cross-eyed'],
+      ['background grey; stereo 5;', 'Wall-eyed']
+      ], '1');
+  Jmol.jmolHtml("<br /><b>Spin:</b> ");
+  Jmol.jmolRadioGroup(jmolAppletA,[
+      ['set spinX 10; set spinY 0; set spinZ 0; spin on;', 'X'],
+      ['set spinX 0; set spinY 10; set spinZ 0; spin on;', 'Y'],
+      ['set spinX 0; set spinY 0; set spinZ 10; spin on;', 'Z'],
+      ['spin off;', 'Off', 'checked'] ], '&nbsp;&nbsp;');
+</script>
+<!--br />&copy; 2017 <a href="mailto:1sandipde@gmail.com">Sandip De</a--> 
+	</div> <!--content-->
+</div> <!--mainPane-->
+</body>
+</html>
+
