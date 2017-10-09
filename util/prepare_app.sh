@@ -1,12 +1,16 @@
 #!/bin/bash
-app=$1
-data=$2
-xyz=$3
+# USAGE: ./util/prepare_app.sh app-base newapp mydata-for-plot my-traj.xyz 
+appbase=$1
+app=$2
+data=$3
+xyz=$4
 
-cp -r example-app $1 
-rm -rf $1/static/xyz/*
-cd $1/static/xyz/
-gfortran ../../../util/split_xyz.f90 ; ./a.out < ../../../$3 ;rm a.out ;cd ../../../
-mv $2 $1/data/COLVAR 
+cp -r ${appbase} ${app} 
+gfortran ${appbase}/../util/split_xyz.f90 -o split 
+cd ${app}/static/xyz/
+../../../split < ../../../${xyz}  ;cd ../../../
+rm -f split
+cp ${data} ${app}/data/COLVAR 
+bokeh serve ${app} --show
 
 

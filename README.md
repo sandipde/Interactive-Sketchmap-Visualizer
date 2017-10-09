@@ -4,8 +4,12 @@ The code to generate Interactive Sketchmap visualizer using bokeh.
 To see an demo version try : https://sketchmap.herokuapp.com/
 To know about sketchmap go to http://sketchmap.org/
 
+# Getting Started
 
-
+cd Interactive Sketchmap Visualizer
+./util/prepare_app.sh <app-base> <app-name> <data-to-plot> <xyz-trajectory-file>
+See build-app-example folder for a working example 
+ 
 # Usage
 
  bokeh serve example-app --show --args -u 1:2:3 -ps 10 
