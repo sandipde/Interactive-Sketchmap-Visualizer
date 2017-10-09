@@ -7,7 +7,9 @@ To know about sketchmap go to http://sketchmap.org/
 # Getting Started
 
 cd Interactive Sketchmap Visualizer
+
 ./util/prepare_app.sh app-base app-name data-to-plot xyz-trajectory-file
+
 See build-app-example folder for a working example 
  
 # Usage
@@ -17,17 +19,23 @@ See build-app-example folder for a working example
  It means start bokeh server to plot using the first two columns in the COLVAR file present in example-app/data/ folder. Use 3rd column as color and pointsize set to 10.  
 
 
-<SMAP-DATA-FILE> format
+SMAP-DATA-FILE format
+
 Column-Name-1 Coulumn-Name-2  ... ... ...
+
 data11         data12         ... ... ...
+
   :              : 
+  
   :              :
+  
   :              :
 
 
-you can also add uderdefined jmol settings by adding -jmol "<jmol settings>"
+you can also add uderdefined jmol settings by adding -jmol "jmol settings"
  eg.
 bokeh  serve MAPbI --show  --args -u 1:2:4 -ps 10 -jmol "connect 1.0 1.2 (carbon) (hydrogen) SINGLE CREATE ; connect 1.0 1.2 (nitrogen) (hydrogen) SINGLE CREATE ; connect 1.0 4.2 (carbon) (nitrogen) SINGLE CREATE ; connect 3.0 6 (phosphorus) (iodine) SINGLE CREATE ; set perspectiveDepth OFF " 
+
 
 # Dependencies
 
