@@ -21,7 +21,8 @@ rm -f <your-app>/static/xyz/*
 cp <your-xyz-files> <your-app>/static/xyz/
 ```
 
-<SMAP-DATA-FILE> format
+SMAP-DATA-FILE should be formatted according to the following schema
+
 ```
 Column-Name-1 Coulumn-Name-2  ... ... ...
 data11         data12         ... ... ...
@@ -30,7 +31,7 @@ data11         data12         ... ... ...
   :              :
 ```
 
-<your-xyz-files> need to follow the name convention: set.0000.xyz set.0001.xyz .....
+The xyz files need to follow the name convention: set.0000.xyz set.0001.xyz .....
 
 
 you can also add user-defined jmol settings by adding -jmol "<jmol settings>"
