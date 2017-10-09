@@ -36,6 +36,10 @@ you can also add uderdefined jmol settings by adding -jmol "jmol settings"
  eg.
 bokeh  serve MAPbI --show  --args -u 1:2:4 -ps 10 -jmol "connect 1.0 1.2 (carbon) (hydrogen) SINGLE CREATE ; connect 1.0 1.2 (nitrogen) (hydrogen) SINGLE CREATE ; connect 1.0 4.2 (carbon) (nitrogen) SINGLE CREATE ; connect 3.0 6 (phosphorus) (iodine) SINGLE CREATE ; set perspectiveDepth OFF " 
 
+# Known Issues
+You need python 2.7 Python 3 is not supported yet 
+
+The data file coloumn names should not contain wild characters. For safety only use "_" as separator eg . atomic_energy
 
 # Dependencies
 
