@@ -24,8 +24,14 @@ from os.path import dirname, join
 from smaplib import *
 from bokeh.events import ButtonClick
 from bokeh.models.widgets import DataTable,TableColumn
-def main(dfile,pcol,appname,title='Sketch-map',pointsize=10,jmol_settings=""):
-    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings
+from bokeh.embed import components
+from bokeh.resources import CDN
+from bokeh.plotting import figure
+
+
+def main(dfile,pcol,app_name,title='Sketch-map',pointsize=10,jmol_settings=""):
+    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname
+    appname=app_name
     ps=pointsize
     jmolsettings=jmol_settings
 #initialise data
@@ -166,16 +172,139 @@ def download():
     from bokeh.io import output_file,show
     from bokeh.resources import CDN
     from bokeh.embed import file_html
+    from bokeh.embed import autoload_static
+    from bokeh.resources import INLINE
+    from jinja2 import Template
 
-    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol
+    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value 
-    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=300,title=title)
-    spacer1 = Spacer(width=200, height=10)
-    spacer2 = Spacer(width=200, height=20)
-    plotpanel=Row(p1,Column(spacer1,p2,spacer2,table))
-    html = file_html(plotpanel, CDN, "my plot")
+    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=300,title='')
+    # Set up mouse selection callbacks
+
+
+# The following code is very tricky to understand properly. 
+# the %s are the function or variable to pass from python depending on the slider callback or mouse callback. 
+# One could write 3 seperate callbacks to connect slider,jmol and mouse selection but this way it is more compact ! 
+
+    code="""
+       var refdata = ref.data;
+       var data = source.data;
+       var ind = cb_obj.%s;
+       Array.prototype.min = function() {
+          return Math.min.apply(null, this);
+          };
+       var inds =ind%s;
+       var xs = refdata['x'][inds];
+       var ys = refdata['y'][inds];
+       data['xs'] = [xs];
+       data['ys'] = [ys];
+       data=refdata[inds];
+       source.trigger('change');
+       %s;
+       var str = "" + inds;
+       var pad = "0000";
+       var indx = pad.substring(0, pad.length - str.length) + str;
+       var settings= "%s" ; 
+       var sfile='static/xyz/set.'+ indx+ '.xyz' ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'load "+sfile + ";" + settings + "')" ;
+       location.href=file;
+       localStorage.setItem("indexref",indx);
+       """ 
+
+#set up mouse
+#    iold=0 
+#    selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
+    refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
+    callback=CustomJS(
+         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("selected['1d'].indices",".min()","s.set('value', inds)",jmolsettings))
+    taptool = p1.select(type=TapTool)
+    taptool.callback = callback
+    p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
+
+# Draw Selection on Overview Plot
+ 
+    p2.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=8,name="mycircle")
+    spacer1 = Spacer(width=200, height=120)
+    spacer2 = Spacer(width=200, height=70)
+    plotpanel=Row(p1,Column(spacer1,p2,spacer2,table)) 
+    js, tag = autoload_static(plotpanel, CDN, "./")       
+    # Get JavaScript/HTML resources
+    template = Template('''<!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <title>Widget</title>
+            <title>Bokeh Scatter Plots</title>
+
+        <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" type="text/css" />
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script>
+        <script type="text/javascript">
+      
+            {{ js_resources }}
+        </script>   
+        <script type="text/javascript" src="{{appname}}/static/jmol/JSmol.min.js"></script>
+   
+        <script type="text/javascript">
+                 Jmol._isAsync = false;
+                 var jmolApplet0; // set up in HTML table, below
+                 jmol_isReady = function(applet) {
+                 document.title = (applet._id + " - Jmol " + Jmol.___JmolVersion)
+                 // Jmol._getElement(applet, "appletdiv").style.border="10px solid blue"
+                 }
+         
+                 var Info = {
+                 width: '100%',
+                 height: '100%',
+                 debug: false,
+                 color: "0xFFFFFF",
+                 use: "HTML5",   // JAVA HTML5 WEBGL are all options
+                 j2sPath: "{{appname}}/static/jmol/j2s", // this needs to point to where the j2s directory is.
+                 jarPath: "{{appname}}/static/jmol/java",// this needs to point to where the java directory is.
+                 jarFile: "JmolAppletSigned.jar",
+                 isSigned: true,
+                 script: "set antialiasDisplay;load {{appname}}/static/xyz/set.0000.xyz; {{jmolsettings}}" ,
+                 serverURL: "./jmol/php/jsmol.php",
+                 readyFunction: jmol_isReady,
+                 disableJ2SLoadMonitor: true,
+                 disableInitialConsole: true,
+                 allowJavaScript: true
+                 };
+              
+                 $(document).ready(function() {
+                 $("#appdiv").html(Jmol.getAppletHtml("jmolApplet0", Info))
+                       });
+        </script> 
+
+         {%- for file in css_files %}
+            <link rel="stylesheet" href="{{file}}">
+         {%- endfor %}
+        </head>
+        <body>
+          <header class="w3-container w3-center  w3-blue-grey"><h2>Interactive Sketchmap Visualizer</h2> <h6>{{title}}</h6> 
+          </header>
+       
+        <div  class="w3-container w3-center" style="width:1200px;">
+         <div class="w3-row">
+           <div class="w3-container w3-col" style="width:70%">
+             {{div}}
+           </div>
+           <div class="w3-center" style="width:390px ;height: 350px ;position:absolute; left:950px" >
+              <div class=" w3-center w3-cell-middle" id="viewer">
+                  <div id="p1" class="w3-tag" style="background-color: #5cb85c" > Selected frame: 0000</div>
+                  <div class="w3-center" style="width:100% ; height:350px"  id="appdiv">  </div>
+
+              </div>
+        </body>
+    </html>
+    ''')
+    css=[]
+    for f in ["w3"]:
+        css.append(appname+"/static/css/"+f+'.css')
+    html = template.render(js_resources=js,div=tag,jmolsettings=jmolsettings,appname=appname,css_files=css,title=title)
+    html=html.encode('utf-8')
     fbase='sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value 
-    fname=appname+'/static/'+fbase+'.html'
+#    fname=appname+'/static/'+fbase+'.html'
+    fname=fbase+'.html'
     f=open(fname,'w')
     f.write(html)
     return CustomJS(code="""
@@ -228,7 +357,7 @@ parser.add_argument("-jmol",  type=str, default=" ",help="optional: parameters t
 args = parser.parse_args()
 pcol = map(int,args.u.split(':'))
 
-lay=main(dfile='COLVAR',pcol=pcol,appname=appname,pointsize=args.ps,jmol_settings=args.jmol)
+lay=main(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol)
 curdoc().add_root(lay)
 curdoc().template_variables["js_files"] = [appname+"/static/jmol/JSmol.min.js"]
 css=[]
