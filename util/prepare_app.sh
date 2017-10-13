@@ -11,6 +11,8 @@ cd ${app}/static/xyz/
 ../../../split < ../../../${xyz}  ;cd ../../../
 rm -f split
 cp ${data} ${app}/data/COLVAR 
+zip -r static-offline.zip ${app}/static/
+mv static-offline.zip ${app}/static/ 
 bokeh serve ${app} --show
 
 
