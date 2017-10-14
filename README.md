@@ -32,7 +32,7 @@ data11         data12         ... ... ...
   :              :
 
 
-you can also add uderdefined jmol settings by adding -jmol "jmol settings"
+you can also add userdefined jmol settings by adding -jmol "jmol settings"
  eg.
 bokeh  serve MAPbI --show  --args -u 1:2:4 -ps 10 -jmol "connect 1.0 1.2 (carbon) (hydrogen) SINGLE CREATE ; connect 1.0 1.2 (nitrogen) (hydrogen) SINGLE CREATE ; connect 1.0 4.2 (carbon) (nitrogen) SINGLE CREATE ; connect 3.0 6 (phosphorus) (iodine) SINGLE CREATE ; set perspectiveDepth OFF " 
 
@@ -41,10 +41,10 @@ bokeh  serve MAPbI --show  --args -u 1:2:4 -ps 10 -jmol "connect 1.0 1.2 (carbon
 
 argparse
 
-tornado==4.4.3
+tornado==4.5.2
 
 numpy
 
-bokeh==0.12.5
+bokeh==0.12.9
 
 pandas
