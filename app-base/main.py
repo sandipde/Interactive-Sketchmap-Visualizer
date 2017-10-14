@@ -127,7 +127,7 @@ def create_plot():
        var pad = "0000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
-       var file= "javascript:Jmol.script(jmolApplet0," + "'load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
@@ -146,7 +146,7 @@ def create_plot():
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","s.set('value', inds)",jmolsettings,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -171,8 +171,9 @@ def create_plot():
 # create buttons 
     play_widget,download_widget=create_buttons()
     playpanel=Row(play_widget,Spacer(width=30),slider_widget)
-    plotpanel=Row(Column(p1,Spacer(height=40),Row(Spacer(width=10,height=40),download_widget)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=50),table))
-
+    plotpanel=Row(Column(p1,Spacer(height=40),Row(Spacer(width=10,height=40),
+                                                     download_widget)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=50),table))
+    
     return plotpanel
 
 def download_extended():
@@ -198,8 +199,7 @@ def download_extended():
     code="""
        var refdata = ref.data;
        var data = source.data;
-       var ind = cb_obj.%s;
-       
+       var ind = %s ;
        Array.prototype.min = function() {
           return Math.min.apply(null, this);
           };
@@ -209,25 +209,32 @@ def download_extended():
        data['xs'] = [xs];
        data['ys'] = [ys];
        data=refdata[inds];
-       source.trigger('change');
+       source.change.emit();
        %s;
        var str = "" + inds;
        var pad = "0000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
-       var file= "javascript:Jmol.script(jmolApplet0," + "'load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
-       document.getElementById("info").innerHTML = "Complete Selection: " + ind  ;
+       
        """ 
 
-#set up mouse
-#    iold=0 
-#    selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
+# Set up Slider
+    print jmolsettings
+    iold=0  
+    selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
+    slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,appname))
+    slider.js_on_change('value', slider_callback)
+    slider.on_change('value', slider_update)
+
+#set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("selected['1d'].indices",".min()","s.set('value', inds)",jmolsettings,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -235,10 +242,28 @@ def download_extended():
 # Draw Selection on Overview Plot
  
     p2.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=8,name="mycircle")
-    spacer1 = Spacer(width=200, height=20)
+    
+#    spacer1 = Spacer(width=200, height=20)
+#    spacer2 = Spacer(width=200, height=170)
+#    plotpanel=Row(p1,Column(spacer1,p2,spacer2,table))    
+
+    # layout stuffs 
+    spacer1 = Spacer(width=200, height=30)
     spacer2 = Spacer(width=200, height=170)
-    plotpanel=Row(p1,Column(spacer1,p2,spacer2,table)) 
-          
+    indx=0
+    xval=cv.pd[xcol.value][indx]
+    yval=cv.pd[ycol.value][indx]
+
+#slider
+    slider_widget=widgetbox(slider,width=400,height=50,sizing_mode='fixed')
+    spacer = Spacer(width=300, height=50)
+
+# create buttons 
+#    play_widget,download_widget=create_buttons()
+    playpanel=Row(Spacer(width=80),slider_widget)
+    plotpanel=Row(Column(p1,Spacer(height=40)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=50),table))
+
+       
     # Get JavaScript/HTML resources
     js, tag = autoload_static(plotpanel, CDN, "./") 
     
@@ -257,12 +282,17 @@ def download_extended():
     f=open(fname,'w')
     f.write(html)
     f.close()
+    
+# prepare zip file from template
+    if (os.path.isfile(zname)): os.remove(zname)
     copyfile(appname+'/static/static-offline.zip',zname)
     zip = zipfile.ZipFile(zname,'a')
-#    path='../sketchmap_CV1-CV2-Energy-None.html'
     zip.write(fname,fbase+'.html')
+    zip.write(appname+'/static/README','README')
     zip.close()
+        
     return CustomJS(code="""
+           alert('Extended offline html file might fail to load on your browser. Refer to README file in download for solution. ');
            window.open("%s",title="%s");
            """ % (zname,fbase))
  
@@ -294,7 +324,7 @@ def download_simple():
     f=open(fname,'w')
     f.write(html)
     f.close()
-    return CustomJS(code="""
+    return CustomJS(code="""        
            window.open("%s",title="%s");
            """ % (fname,fbase))   
 

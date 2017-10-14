@@ -15,7 +15,7 @@ var Info = {
    jarPath: "{{dir}}/static/jmol/java",// this needs to point to where the java directory is.
    jarFile: "JmolAppletSigned.jar",
    isSigned: true,
-   script: "set antialiasDisplay;load {{dir}}/static/xyz/set.0000.xyz; {{jmolsettings}}" ,
+   script: "set antialiasDisplay; set frank off; load {{dir}}/static/xyz/set.0000.xyz; {{jmolsettings}}" ,
    serverURL: "./jmol/php/jsmol.php",
    readyFunction: jmol_isReady,
    disableJ2SLoadMonitor: true,
