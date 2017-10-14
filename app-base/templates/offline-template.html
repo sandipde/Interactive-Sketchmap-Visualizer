@@ -9,7 +9,7 @@
         <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script-->
         <script type="text/javascript" src="{{appname}}/static/jmol/JSmol.min.js"></script>
         <script type="text/javascript">
-        inds="0000" ;      // initialization of the local storage used in popup window
+        inds="000000" ;      // initialization of the local storage used in popup window
         localStorage.setItem("indexref",inds);
         </script>
         <script type="text/javascript">
@@ -30,7 +30,7 @@
            jarPath: "{{appname}}/static/jmol/java",// this needs to point to where the java directory is.
            jarFile: "JmolAppletSigned.jar",
            isSigned: true,
-           script: "set antialiasDisplay; set frank off ; load {{appname}}/static/xyz/set.0000.xyz; {{jmolsettings}}" ,
+           script: "set antialiasDisplay; set frank off ; load {{appname}}/static/xyz/set.000000.xyz; {{jmolsettings}}" ,
            serverURL: "./jmol/php/jsmol.php",
            readyFunction: jmol_isReady,
            disableJ2SLoadMonitor: true,
@@ -133,7 +133,7 @@
            </div>
            <div class="w3-center" style="width:390px ;height: 350px ;position:absolute; left:950px" >
               <div class=" w3-center w3-cell-middle" id="viewer">
-                  <div id="p1" class="w3-tag" style="background-color: #5cb85c" > Selected frame: 0000</div>
+                  <div id="p1" class="w3-tag" style="background-color: #5cb85c" > Selected frame: 000000</div>
                   <div class="w3-center" style="width:100% ; height:350px"  id="appdiv">  </div>
                   <button id="step4" class="button" href="javascript:void(0);"  onclick='holdJSmol(jmolApplet0);'><span>Hold </span> </button>
                   <button id="step3" class="button" href="javascript:void(0);" onclick='cloneJSmol(jmolApplet0);'> <span>Analyse </span></button>

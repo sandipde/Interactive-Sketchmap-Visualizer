@@ -124,7 +124,7 @@ def create_plot():
        source.change.emit();
        %s;
        var str = "" + inds;
-       var pad = "0000";
+       var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
        var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
@@ -212,7 +212,7 @@ def download_extended():
        source.change.emit();
        %s;
        var str = "" + inds;
-       var pad = "0000";
+       var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
        var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
