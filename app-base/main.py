@@ -106,11 +106,12 @@ def create_plot():
 # The following code is very tricky to understand properly. 
 # the %s are the function or variable to pass from python depending on the slider callback or mouse callback. 
 # One could write 3 seperate callbacks to connect slider,jmol and mouse selection but this way it is more compact ! 
+ 
 
     code="""
        var refdata = ref.data;
        var data = source.data;
-       var ind = cb_obj.%s;
+       var ind = %s ;
        Array.prototype.min = function() {
           return Math.min.apply(null, this);
           };
@@ -120,7 +121,7 @@ def create_plot():
        data['xs'] = [xs];
        data['ys'] = [ys];
        data=refdata[inds];
-       source.trigger('change');
+       source.change.emit();
        %s;
        var str = "" + inds;
        var pad = "0000";
@@ -139,13 +140,13 @@ def create_plot():
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
     slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("value","","",jmolsettings,appname))
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("selected['1d'].indices",".min()","s.set('value', inds)",jmolsettings,appname))
+         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","s.set('value', inds)",jmolsettings,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -198,6 +199,7 @@ def download_extended():
        var refdata = ref.data;
        var data = source.data;
        var ind = cb_obj.%s;
+       
        Array.prototype.min = function() {
           return Math.min.apply(null, this);
           };
