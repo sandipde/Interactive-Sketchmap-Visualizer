@@ -57,4 +57,6 @@ Python 2.7
 
     pandas
 
+    jinja2
+
 gfortran 
