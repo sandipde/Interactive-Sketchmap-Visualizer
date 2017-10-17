@@ -26,7 +26,7 @@ from bokeh.events import ButtonClick
 from bokeh.models.widgets import RadioGroup,RadioButtonGroup,CheckboxGroup
 from bokeh.models.widgets import DataTable,TableColumn
 from bokeh.embed import components
-from bokeh.resources import CDN
+from bokeh.resources import CDN, INLINE
 from bokeh.plotting import figure
 
 
@@ -43,16 +43,21 @@ def main(dfile,pcol,app_name,title='Sketch-map',pointsize=10,jmol_settings=""):
     columns=[i for i in cv.columns]
 
 # set up selection options
-
-    xcol = Select(title='X-Axis', value=columns[pcol[0]-1], options=columns,width=50)
+    tcol=pcol[0]-1
+    xcol = Select(title='X-Axis', value=columns[tcol], options=columns,width=50)
     xcol.on_change('value', update)
-    ycol = Select(title='Y-Axis', value=columns[pcol[1]-1], options=columns, width=50)
+    tcol=pcol[1]-1
+    ycol = Select(title='Y-Axis', value=columns[tcol], options=columns, width=50)
     ycol.on_change('value', update)
     roptions=['None']
     for option in columns: roptions.append(option)
     rcol = Select(title='Size', value='None', options=roptions,width=50)
     rcol.on_change('value', update)
-    ccol = Select(title='Color', value=columns[pcol[2]-1], options=roptions,width=50)
+    if (len(pcol)>2 ):
+      tcol=pcol[2]-1
+      ccol = Select(title='Color', value=columns[tcol], options=roptions,width=50)
+    else:    
+      ccol = Select(title='Color', value='None', options=roptions,width=50)
     ccol.on_change('value', update)
     plt_name = Select(title='Palette',width=50, value='Inferno256', options=["Magma256","Plasma256","Spectral6","Inferno256","Viridis256","Greys256"])
     plt_name.on_change('value', update)
@@ -66,7 +71,6 @@ def main(dfile,pcol,app_name,title='Sketch-map',pointsize=10,jmol_settings=""):
 # create plot and slider
 
     plotpanel=create_plot()
-
 # full layout 
     lay=layout([
         [controls],
@@ -92,7 +96,6 @@ def create_buttons():
     download_widget2=widgetbox(download_button2,width=200,height=50,sizing_mode='fixed')
     dpanel=Row(Spacer(width=170),download_widget1,Spacer(width=10),download_widget2,width=600, sizing_mode='fixed')
     return play_widget,dpanel
-    
     
     
 def create_plot():
@@ -178,7 +181,7 @@ def create_plot():
 
 def download_extended():
     from bokeh.io import output_file,show
-    from bokeh.resources import CDN
+    from bokeh.resources import CDN, INLINE
     from bokeh.embed import file_html
     from bokeh.embed import autoload_static
     from bokeh.resources import INLINE
@@ -265,8 +268,11 @@ def download_extended():
 
        
     # Get JavaScript/HTML resources
-    js, tag = autoload_static(plotpanel, CDN, "./") 
-    
+    js, tag = autoload_static(plotpanel, INLINE, "")
+    js=js.decode("utf-8") 
+#    print "jS",js 
+#    print "TAG",tag
+#    return 
     css=[]
     for f in ["w3"]:
         css.append(appname+"/static/css/"+f+'.css')
@@ -280,7 +286,7 @@ def download_extended():
     zname=appname+'/static/'+fbase+'.zip'
  #   fname=fbase+'.html'
     f=open(fname,'w')
-    f.write(html)
+    f.write(html.encode("utf-8"))
     f.close()
     
 # prepare zip file from template
@@ -302,6 +308,7 @@ def download_simple():
     from bokeh.embed import file_html
     from bokeh.embed import autoload_static
     from bokeh.resources import INLINE
+    from bokeh.resources import Resources
 #    from jinja2 import Template
     import jinja2
 
@@ -312,7 +319,8 @@ def download_simple():
     spacer1 = Spacer(width=200, height=10)
     spacer2 = Spacer(width=200, height=20)
     plotpanel_static=Row(p1,Column(spacer1,Row(Spacer(width=200),p2),spacer2,table))
-    js, tag = autoload_static(plotpanel_static, CDN, "")
+    js, tag = autoload_static(plotpanel_static, Resources(mode='inline'), "")
+    js=js.decode("utf-8") 
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template-minimal.html"
@@ -322,7 +330,7 @@ def download_simple():
     fbase='sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value
     fname=appname+'/static/'+fbase+'-minimal.html'
     f=open(fname,'w')
-    f.write(html)
+    f.write(html.encode("utf-8"))
     f.close()
     return CustomJS(code="""        
            window.open("%s",title="%s");
