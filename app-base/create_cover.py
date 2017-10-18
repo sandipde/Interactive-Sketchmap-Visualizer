@@ -69,7 +69,7 @@ def create_cover_image(appname,plot):
    from bokeh.io import export_png
    filename='./'+appname+'/static/cover.png'
    export_png(plot, filename=filename)  
-   print "Success: wrote: "+ filename   
+   print ("Success: wrote: "+ filename)   
    return
 
 if __name__ == '__main__':
@@ -81,6 +81,6 @@ if __name__ == '__main__':
    parser.add_argument("-jmol",  type=str, default=" ",help="optional: parameters to be used for jmol")
    #parser.add_argument("-t",  type=str, default='',help="Title of the plot")
    args = parser.parse_args()
-   pcol = map(int,args.u.split(':'))
+   pcol = list(map(int,args.u.split(':')))
    
    main(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol)

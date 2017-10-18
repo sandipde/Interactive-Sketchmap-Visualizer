@@ -55,5 +55,9 @@ Python 2.7 or 3.3
     pandas
 
     jinja2
+    
+    selenium
+ 
+    pillow
 
 gfortran 
