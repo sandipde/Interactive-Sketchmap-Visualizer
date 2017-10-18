@@ -15,6 +15,6 @@ cp ${data} ${app}/data/COLVAR
 zip -r static-offline.zip ${app}/static/
 mv static-offline.zip ${app}/static/ 
 python ${app}/create_cover.py 
-bokeh serve ${app} --show
+#bokeh serve ${app} --show
 
 

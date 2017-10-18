@@ -138,7 +138,7 @@ def create_plot():
        """ 
 
 # Set up Slider
-    print jmolsettings
+    print (jmolsettings)
     iold=0  
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
@@ -226,7 +226,7 @@ def download_extended():
        """ 
 
 # Set up Slider
-    print jmolsettings
+    print (jmolsettings)
     iold=0  
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
@@ -269,7 +269,7 @@ def download_extended():
        
     # Get JavaScript/HTML resources
     js, tag = autoload_static(plotpanel, INLINE, "")
-    js=js.decode("utf-8") 
+    if (sys.version_info[0] <3):js=js.decode("utf-8") #need this for python 2.7 but not python 3.3  
 #    print "jS",js 
 #    print "TAG",tag
 #    return 
@@ -285,7 +285,10 @@ def download_extended():
     fname=appname+'/static/'+fbase+'.html'
     zname=appname+'/static/'+fbase+'.zip'
  #   fname=fbase+'.html'
-    f=open(fname,'w')
+    if (sys.version_info[0] <3):
+             f=open(fname,'w')   #python 2.7
+    else:
+             f=open(fname,'wb')  #python 3.3
     f.write(html.encode("utf-8"))
     f.close()
     
@@ -320,7 +323,7 @@ def download_simple():
     spacer2 = Spacer(width=200, height=20)
     plotpanel_static=Row(p1,Column(spacer1,Row(Spacer(width=200),p2),spacer2,table))
     js, tag = autoload_static(plotpanel_static, Resources(mode='inline'), "")
-    js=js.decode("utf-8") 
+    if (sys.version_info[0] <3):js=js.decode("utf-8") #need this for python 2.7 but not python 3.3  
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template-minimal.html"
@@ -329,7 +332,11 @@ def download_simple():
 #    html = file_html(plotpanel_static, CDN, "my plot")
     fbase='sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value
     fname=appname+'/static/'+fbase+'-minimal.html'
-    f=open(fname,'w')
+    if (sys.version_info[0] <3):
+             f=open(fname,'w')   #python 2.7
+    else:
+             f=open(fname,'wb')  #python 3.3
+
     f.write(html.encode("utf-8"))
     f.close()
     return CustomJS(code="""        
@@ -378,7 +385,7 @@ parser.add_argument("-ps",  type=float, default='10',help="point size")
 parser.add_argument("-jmol",  type=str, default=" ",help="optional: parameters to be used for jmol")
 #parser.add_argument("-t",  type=str, default='',help="Title of the plot")
 args = parser.parse_args()
-pcol = map(int,args.u.split(':'))
+pcol = list(map(int,args.u.split(':')))
 
 lay=main(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol)
 curdoc().add_root(lay)

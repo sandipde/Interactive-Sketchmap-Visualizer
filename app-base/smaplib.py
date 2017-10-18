@@ -39,7 +39,7 @@ class smap:
     def read_properties(self,propfile,sep='\s+',**kwargs):
         prop=pd.read_csv(propfile,sep=sep,**kwargs)
         if (len(prop) != len(self.data)): 
-            print "data length and property length mismtch"
+            print ("data length and property length mismtch")
             pass
         df=self.pd
         self.pd=pd.concat([df,prop],axis=1)
