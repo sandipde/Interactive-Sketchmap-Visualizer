@@ -14,13 +14,13 @@ parser.add_argument("-jmol",  type=str, default=" ",help="optional: parameters t
 #parser.add_argument("-t",  type=str, default='',help="Title of the plot")
 args = parser.parse_args()
 pcol = list(map(int,args.u.split(':')))
-
-lay=bkapp(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol)
+server_static_root=appname
+lay=bkapp(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol,server_static_root=appname)
 curdoc().add_root(lay)
-curdoc().template_variables["js_files"] = [appname+"/static/jmol/JSmol.min.js"]
+curdoc().template_variables["js_files"] = [server_static_root+"/static/jmol/JSmol.min.js"]
 css=[]
 for f in ["w3","introjs"]:
-  css.append(appname+"/static/css/"+f+'.css')
+  css.append(server_static_root+"/static/css/"+f+'.css')
 curdoc().template_variables["css_files"] = css
 curdoc().template_variables["appname"] = [appname]
 curdoc().template_variables["jmolsettings"] = args.jmol
