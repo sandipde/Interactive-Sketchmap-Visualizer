@@ -8,7 +8,7 @@
 
     git clone https://github.com/sandipde/Interactive-Sketchmap-Visualizer.git
     cd Interactive Sketchmap Visualizer/example
-    sudo pip install argparse tornado==4.5.2 numpy bokeh==0.12.9 pandas jinja  selenium pillow ase
+    sudo pip install jinja2 pyyaml argparse tornado==4.5.2 numpy bokeh==0.12.9 pandas selenium pillow ase
     python ../build.py --data --data Arginine-Dipeptide.dat  Qm7b.dat --traj traj-Arginine-Dipeptide.xyz traj-qm7b.xyz
     bokeh serve Arginine-Dipeptide Qm7b --show
  
@@ -75,35 +75,23 @@ Work with both Python 2.7 and 3.3
 Building dependency 
 
         argparse
-
+        pyyaml
         tornado==4.5.2
-
         numpy
-
         bokeh==0.12.9
-
         pandas
-
         jinja2
-
         selenium
-
         pillow
-
         ase
 
   Runtime Dependency 
   
         argparse
-
         tornado==4.5.2
-
         numpy
-
         bokeh==0.12.9
-
         pandas
-
         jinja2
 
   
