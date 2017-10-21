@@ -36,14 +36,26 @@ class isv():
                 if os.path.exists(dir): shutil.rmtree(dir,ignore_errors=True)
 #                os.makedirs(dir)
     def setup(self,datafile,structure_file):
-       self.setup_base()
-       self.setup_static()
-       self.setup_templates()            
-       self.add_data(datafile)
-       self.add_structures(structure_file)
-       self.setup_offline_arxiv()
+       try:
+         self.setup_base()
+         self.setup_static()
+         self.setup_templates()            
+         self.add_data(datafile)
+       except:
+         sys.exit("There was a problem in setting up directory structure.\nTry Running from a clean directory.")
+       try:
+         self.add_structures(structure_file)
+       except:
+         print("There was problem handling the Trajectory file. You will not have atomic structures in server")
+         pass
+       try:self.setup_offline_arxiv()
+       except:
+         print("There was a problem setting up the static archive. You will not be able to use static html download option") 
+         pass
+           
        if self.apptype =="server" : 
-             self.setup_cover()
+             try: self.setup_cover()
+             except:print("Problem creating cover image. Your website will not look good but it will work !" )
              shutil.copy2(os.path.join(self.approot,'server.py'),'server.py')
     
     def setup_cover(self):
@@ -52,8 +64,8 @@ class isv():
        cover(self.appname)       
 
     def setup_offline_arxiv(self): 
-       print("Setting up Static archive")
        zname=self.appname+'-static-offline'
+       print("Setting up archive template:",zname)
        if not os.path.exists('.isv'):os.mkdir('.isv')
        rmpath=os.path.join('.isv','static')
        if os.path.exists(rmpath): 
@@ -103,7 +115,7 @@ class isv():
    
 
     def setup_base(self):
-        print("Setting up app-base ")
+        print("Setting up app-base: ", self.appname)
         approot=self.approot
         appname=self.appname
         os.makedirs(appname)
@@ -115,7 +127,7 @@ class isv():
     
     
     def setup_static(self):
-        print("Setting up app-static")
+        print("Setting up static:", self.static)
         # copy folder and file from app-base/static folder to static folder
         ref_static_path=os.path.join(self.approot,'static')
         static_path=self.static

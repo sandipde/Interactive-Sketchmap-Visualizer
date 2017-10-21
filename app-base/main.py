@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pandas as pd
 import os
 import argparse
@@ -33,7 +34,6 @@ from bokeh.plotting import figure
 def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10,jmol_settings=""):
     global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix
     appname=app_name
-    print appname
     server_prefix=server_static_root
     ps=pointsize
     jmolsettings=jmol_settings
@@ -281,7 +281,7 @@ def download_extended():
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template.html"
-    print TEMPLATE_FILE
+    #print TEMPLATE_FILE
     template = templateEnv.get_template( TEMPLATE_FILE )
     html = template.render(js_resources=js,div=tag,jmolsettings=jmolsettings,appname=appname,server_prefix='.',css_files=css,title=title)
     fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value 
@@ -330,7 +330,7 @@ def download_simple():
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template-minimal.html"
-    print TEMPLATE_FILE
+    #print TEMPLATE_FILE
     template = templateEnv.get_template( TEMPLATE_FILE )
     html = template.render(js_resources=js,div=tag,appname=appname,title=title,server_prefix=server_prefix)
 #    html = file_html(plotpanel_static, CDN, "my plot")
