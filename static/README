@@ -1,0 +1,21 @@
+The offline html file requires access to local javascript libraries included in the directory. 
+Most mordern browsers do not allow this for security reasons. 
+Firefox still allows it so if you have it, try to load it with Firefox first.
+
+If firefox issues error or you prefer sticking to your favourite browser then another simple solution is the following 
+
+Install python. cd into this dir and then issue :
+
+ python -m SimpleHTTPServer  
+
+which will spin up a web server hosting entire dir listing which you reference from URL on any browser :
+
+http://localhost:8000
+
+
+this is built into any python install (batteries are included). For python3 use this :
+
+python3 -m http.server
+
+
+write to 1sandipde@gmail.com if you still have problem. 

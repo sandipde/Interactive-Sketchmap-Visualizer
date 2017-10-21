@@ -9,11 +9,11 @@
     <script type="text/javascript" src="{{ file }}"></script>
     {%- endfor %}
     {% block javascript %} 
-    {%- for dir in appname %}
+<!--/*    %- for dir in appname % */ -->
     <script type="text/javascript">
         {% include "myjsmol.js" %}
-    </script>
-    {%- endfor %}
+    </script> 
+  <!--  /* %- endfor % */ -->
     <script type="text/javascript">
         {% include "intro.js" %}
     </script>
@@ -222,9 +222,8 @@
    <p> Select points on the plot </p>
    </div>
 </div-->
-{%- for dir in appname %}
- <header class="w3-container w3-center  w3-blue-grey"><h2>Interactive Sketchmap Visualizer</h2> <h6>{{dir}}</h6> </header>
-{%- endfor %}
+
+ <header class="w3-container w3-center  w3-blue-grey"><h2>Interactive Sketchmap Visualizer</h2> <h6>{{appname}}</h6> </header>
  <div  class="w3-container w3-center" style="width:1200px;">
   <div class="w3-row">
     <div class="w3-container w3-col" style="width:70%">
