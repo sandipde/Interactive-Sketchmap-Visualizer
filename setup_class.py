@@ -65,6 +65,7 @@ class isv():
        shutil.copytree(os.path.join(self.static,'jmol'),os.path.join('.isv','static','jmol'))
        shutil.copy2(os.path.join(self.static,'pop.html'),os.path.join('.isv','static'))
        shutil.copy2(os.path.join(self.static,'compare.html'),os.path.join('.isv','static'))
+       shutil.copy2(os.path.join(self.static,'loader.gif'),os.path.join('.isv','static'))
   #     rmpath=os.path.join('.isv','static','js')
   #     if os.path.exists(rmpath): shutil.rmtree(rmpath)
        shutil.copy2(os.path.join(self.approot,'static','README'),os.path.join('.isv','README'))
@@ -125,7 +126,7 @@ class isv():
             if not os.path.exists(dest):      
                 shutil.copytree(src,dest)
 
-        for file in ['pop.html','compare.html']:
+        for file in ['loader.gif','pop.html','compare.html']:
             src=os.path.join(ref_static_path,file)
             dest=os.path.join(static_path,file)
             if not os.path.exists(dest):
