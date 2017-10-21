@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<title>ISV</title>
+<meta charset="UTF-8">
+<script src="//code.tidio.co/tbasdjqxqutzwo8gsimjpymjzt2yyjtl.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+body,h1,h2,h3,h4,h5,h6 {font-family: "Lato", sans-serif;}
+body, html {
+    height: 100%;
+    color: #777;
+    line-height: 1.8;
+}
+
+/* Create a Parallax Effect */
+.bgimg-1, .bgimg-2, .bgimg-3 {
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/* First image (Logo. Full height) */
+.bgimg-1 {
+    background-image: url('/static/arg-dipeptide.jpg');
+    min-height: 100%;
+}
+
+/* Second image (Portfolio) */
+.bgimg-2 {
+    background-image: url("/static/Si-phases.jpg");
+    min-height: 400px;
+}
+
+/* Third image (Contact) */
+.bgimg-3 {
+    background-image: url("/static/Si-phases.jpg");
+    min-height: 400px;
+}
+
+.w3-wide {letter-spacing: 10px;}
+.w3-hover-opacity {cursor: pointer;}
+
+/* Turn off parallax scrolling for tablets and phones */
+@media only screen and (max-device-width: 1024px) {
+    .bgimg-1, .bgimg-2, .bgimg-3 {
+        background-attachment: scroll;
+    }
+}
+</style>
+<body>
+
+<!-- Navbar (sit on top) -->
+<div class="w3-top">
+  <div class="w3-bar" id="myNavbar">
+    <a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right" href="javascript:void(0);" onclick="toggleFunction()" title="Toggle Navigation Menu">
+      <i class="fa fa-bars"></i>
+    </a>
+    <a href="#home" class="w3-bar-item w3-button">HOME</a>
+    <a href="#gallery" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-th"></i> GALLERY</a>
+    <a href="#about" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-user"></i> ABOUT</a>
+    <a href="#" class="w3-bar-item w3-button w3-hide-small w3-right w3-hover-red">
+      <i class="fa fa-search"></i>
+    </a>
+  </div>
+
+  <!-- Navbar on small screens -->
+  <div id="navDemo" class="w3-bar-block w3-white w3-hide w3-hide-large w3-hide-medium">
+    <a href="#gallery" class="w3-bar-item w3-button" onclick="toggleFunction()">GALLERY</a>
+    <a href="#about" class="w3-bar-item w3-button" onclick="toggleFunction()">ABOUT</a>
+    <a href="#" class="w3-bar-item w3-button">SEARCH</a>
+  </div>
+</div>
+
+<!-- First Parallax Image with Logo Text -->
+<div class="bgimg-1 w3-display-container w3-opacity-min" id="home">
+  <div class="w3-display-middle" style="white-space:nowrap;">
+    <span class="w3-center w3-padding-large w3-black w3-xlarge w3-wide w3-animate-opacity">Interactive Sketchmaps </span>
+  </div>
+</div>
+<!-- Container (Portfolio Section) -->
+<div class="w3-content w3-container w3-padding-64" id="gallery">
+  <h3 class="w3-center">Examples</h3>
+  <p class="w3-center"><em>Here are some of the example maps<br> Click on the images to open the viewer</em></p><br>
+  <!-- Responsive Grid. Four columns on tablets, laptops and desktops. Will stack on mobile devices/small screens (100% width) -->
+
+  <div class="w3-row-padding w3-center w3-center">
+  {%- for appname in applist %}
+    <div class="w3-col w3-center m3">
+        <img src="/static/{{appname}}-cover.png" style="width:100%" onclick='window.open("/{{appname}}");'  class="w3-hover-opacity" alt="{{appname}}">
+        <br><h6>{{appname}}</h6>
+    </div>
+  {%- endfor %}
+  </div>
+</div>
+    <!--button class="w3-button w3-padding-large w3-light-grey" style="margin-top:64px">LOAD MORE</button-->
+<!-- Second Parallax Image with Portfolio Text -->
+<!--div class="bgimg-2 w3-display-container w3-opacity-min">
+  <div class="w3-display-middle">
+    <span class="w3-xxlarge  w3-wide">GALLERY</span>
+  </div>
+</div-->
+
+
+<!-- Container (About Section) -->
+<div class="w3-content w3-container w3-padding-64" id="about">
+  <h2 class="w3-center">ABOUT SKETCHMAP</h2>
+  <p> Sketch-map is a non-linear dimensionality reduction algorithm that is particularly well suited for examining high-dimensionality data that is routinely produced in atomistic simulations. It transforms the connectivity between a set of high dimensionality data points in 2-dimension while putting higher importance to proximity matching. While the similarity between a pair of atomic structures can be measured in various ways, we used SOAP-REMatch kernel, developed in our group for this purpose.
+ </p>
+ 
+
+    <!-- Hide this text on small devices -->
+      <h2 class="w3-center"> References </h2>
+      <h3 class="w3-center"> Machine Learning Papers </h3>
+      <ul>
+        <li>
+           <a href="https://jcheminf.springeropen.com/articles/10.1186/s13321-017-0192-4">Comparing molecules and solids across structural and alchemical space</a><br/>
+  Sandip De, AP Bartók, G Csányi, M Ceriotti - Physical Chemistry Chemical Physics, 2016 <br/>
+       </li>
+        <li>
+           <a href="https://jcheminf.springeropen.com/articles/10.1186/s13321-017-0192-4">Mapping and classifying molecules from a high-throughput structural database</a><br/>
+            Sandip De, Felix Musil, Teresa Ingram, Carsten Baldauf and Michele Ceriotti, Journal of Cheminformatics 20179:6  <br/>
+       </li>
+  <div class="w3-row">
+    <div class="w3-col m6 w3-center w3-padding-large">
+      <img src="/static/arg-dipeptide.jpg" class="w3-round w3-image w3-opacity w3-hover-opacity-off" alt="Arginine Dipeptide" width="600" >
+     <br> 
+     <img src="/static/Si-phases.jpg" class="w3-round w3-image w3-opacity w3-hover-opacity-off" alt="Silicon Phases" width="600" >
+    </div>
+    <div class="w3-col m6  w3-padding-large">
+      <h3> Methodological papers </h3>
+      <ul>
+        <li>
+          <a href="http://www.pnas.org/content/109/14/5196"> Using sketch-map coordinates to analyze and bias molecular dynamics simulations</a> <br/>
+          G. A. Tribello, M. Ceriotti and M. Parrinello, Proc. Acad. Natl. Sci. U.S.A. 109 5196 (2012) <br/>
+          <i> A paper showing how sketch-map coordinates can be used to bias molecular molecular
+              dynamics simulations.  In this paper sketch-map coordinates are used to analyze the
+              free energy surface of an ala12 model protein </i>
+        <li> 
+          <a href="http://www.pnas.org/content/108/32/13023"> Simplfying the representation of complex free energy landscapes using sketch-map </a> <br/>
+          M. Ceriotti, G. A. Tribello and M. Parrinello, Proc. Acad. Natl. Sci. U.S.A. 108 13023 (2011) <br/>
+          <i> The original paper on the methodology.  It contains a detailed description of how the algorithm 
+              works together with an application to a reconnaissance metadynamics trajectory for ala12 </i>
+        </li>
+      </ul>
+    </div>
+
+<h3> Applications </h3>
+<ul>
+  <li>
+    <a href="http://pubs.acs.org/doi/abs/10.1021/ct3010563"> Demonstrating the transferability and the descriptive power of sketch-map </a> <br/>
+    M. Ceriotti, G. A. Tribello and M. Parrinello, J. Chem. Theory Comput. 9 1521 (2013) <br/>
+    <i> Sketch-map is used to analyze the results of long parallel tempereing simulations of Lennard Jones 
+        clusters.  Remarkably the sketch-map coordinates obtained by fitting the trajectory of LJ38 can be
+        used to discriminate between configurations of a second different cluster and the solid phases of LJ</i>
+  <li>
+    <a href="http://www.pnas.org/content/109/14/5170.abstract?sid=8c7101ae-b04d-4358-8469-80d4f5ea3d3a"> Locating binding poses in protein-ligand systems using reconnaissance metadynamics </a> <br/>
+    P. S&ouml;derhjelm, G. A. Tribello, and M. Parrinello, Proc. Acad. Natl. Sci. U.S.A. 109 5170 (2012) <br/>
+    <i> Sketch-map is used to analyze the results from a reconnaissance metadynamics simulation
+       of benzamidine binding to a trypsin protein</i>
+  </li>
+</ul>
+
+
+  </div>
+</div>
+
+
+
+<!-- Modal for full size images on click-->
+<div id="modal01" class="w3-modal w3-black" onclick="this.style.display='none'">
+  <span class="w3-button w3-large w3-black w3-display-topright" title="Close Modal Image"><i class="fa fa-remove"></i></span>
+  <div class="w3-modal-content w3-animate-zoom w3-center w3-transparent w3-padding-64">
+    <img id="img01" class="w3-image">
+    <p id="caption" class="w3-opacity w3-large"></p>
+  </div>
+</div>
+
+<!-- Third Parallax Image with Portfolio Text -->
+<!-- Container (Contact Section) -->
+
+<!-- Footer -->
+<footer class="w3-center w3-black w3-padding-64 w3-opacity w3-hover-opacity-off">
+  <a href="#home" class="w3-button w3-light-grey"><i class="fa fa-arrow-up w3-margin-right"></i>To the top</a>
+  <div class="w3-xlarge w3-section">
+    <i class="fa fa-instagram w3-hover-opacity"></i>
+    <a href="http://twitter.com"> <i class="fa fa-twitter w3-hover-opacity"></i> </a>
+  </div>
+  <p>Created by Sandip De </p>
+</footer>
+ 
+<!-- Add Google Maps -->
+<script>
+
+// Modal Image Gallery
+function onClick(element) {
+  document.getElementById("img01").src = element.src;
+  document.getElementById("modal01").style.display = "block";
+  var captionText = document.getElementById("caption");
+  captionText.innerHTML = element.alt;
+
+}
+
+// Change style of navbar on scroll
+window.onscroll = function() {myFunction()};
+function myFunction() {
+    var navbar = document.getElementById("myNavbar");
+    if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+        navbar.className = "w3-bar" + " w3-card-2" + " w3-animate-top" + " w3-white";
+    } else {
+        navbar.className = navbar.className.replace(" w3-card-2 w3-animate-top w3-white", "");
+    }
+}
+
+// Used to toggle the menu on small screens when clicking on the menu button
+function toggleFunction() {
+    var x = document.getElementById("navDemo");
+    if (x.className.indexOf("w3-show") == -1) {
+        x.className += " w3-show";
+    } else {
+        x.className = x.className.replace(" w3-show", "");
+    }
+}
+</script>
+
+</body>
+</html>
+
+

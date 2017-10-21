@@ -33,11 +33,12 @@ from bokeh.plotting import figure
 def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10,jmol_settings=""):
     global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix
     appname=app_name
+    print appname
     server_prefix=server_static_root
     ps=pointsize
     jmolsettings=jmol_settings
 #initialise data
-    datafile=join(dirname(__file__), 'data', dfile)
+    datafile=join(appname, 'data', dfile)
     cv=smap(name=title)
     cv.read(datafile) 
     n=len(cv.data)
@@ -131,7 +132,7 @@ def create_plot():
        var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
-       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/%s/set."+ indx+ ".xyz ;" + settings + "')" ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/%s-structures/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
@@ -219,7 +220,7 @@ def download_extended():
        var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
-       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/%s/set."+ indx+ ".xyz ;" + settings + "')" ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/%s-structures/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
@@ -232,13 +233,13 @@ def download_extended():
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
     slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,server_prefix,appname))
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,'.',appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,server_prefix,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,'.',appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -276,15 +277,16 @@ def download_extended():
 #    return 
     css=[]
     for f in ["w3"]:
-        css.append(server_prefix+"/static/css/"+f+'.css')
+        css.append("./static/css/"+f+'.css')
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template.html"
+    print TEMPLATE_FILE
     template = templateEnv.get_template( TEMPLATE_FILE )
     html = template.render(js_resources=js,div=tag,jmolsettings=jmolsettings,appname=appname,server_prefix=server_prefix,css_files=css,title=title)
     fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value 
-    fname=server_prefix+'/static/'+fbase+'.html'
-    zname=server_prefix+'/static/'+fbase+'.zip'
+    fname=os.path.join(server_prefix,'static',fbase+'.html')
+    zname=os.path.join(server_prefix,'static',fbase+'.zip')
  #   fname=fbase+'.html'
     if (sys.version_info[0] <3):
              f=open(fname,'w')   #python 2.7
@@ -295,10 +297,10 @@ def download_extended():
     
 # prepare zip file from template
     if (os.path.isfile(zname)): os.remove(zname)
-    copyfile(server_prefix+'/static/static-offline.zip',zname)
+    copyfile(os.path.join(server_prefix,'static',appname+'-static-offline.zip'),zname)
     zip = zipfile.ZipFile(zname,'a')
     zip.write(fname,fbase+'.html')
-    zip.write(server_prefix+'/static/README','README')
+#    zip.write(os.path.join(server_prefix,'static','README'),'README')
     zip.close()
         
     return CustomJS(code="""
@@ -328,11 +330,12 @@ def download_simple():
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template-minimal.html"
+    print TEMPLATE_FILE
     template = templateEnv.get_template( TEMPLATE_FILE )
     html = template.render(js_resources=js,div=tag,appname=appname,title=title,server_prefix=server_prefix)
 #    html = file_html(plotpanel_static, CDN, "my plot")
     fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value
-    fname=server_prefix+'/static/'+fbase+'-minimal.html'
+    fname=os.path.join(server_prefix,'static',fbase+'-minimal.html')
     if (sys.version_info[0] <3):
              f=open(fname,'w')   #python 2.7
     else:

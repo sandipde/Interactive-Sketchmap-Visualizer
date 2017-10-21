@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="Author" content="Sandip De" />
+<title>The Jmol Viewer</title>
+<script type="text/javascript" src="./jmol/JSmol.min.js"></script>
+<style type="text/css">
+/* These are important, dont change: */
+
+html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
+.JmolPanels { position: absolute; overflow: hidden; }
+.textPanels { position: absolute; overflow: auto; }
+
+/* Dont add margin nor padding to textPane; if needed, use an inner div with desired style (like contents below) */
+
+/* These are aesthetic, can be customized: */
+
+.content { padding: 0.5em 1ex; }
+</style>
+
+<script type="text/javascript">
+//  	USER'S SETTINGS: 
+// sets the side of the page that the model appears on,you can set this to "top" or "bottom"
+var side = "bottom"	
+// you can set this to any integer, meaning percent of window height assigned to Jmol panel
+var h = 80		
+//      --------------
+
+var cssTx = '<style type="text/css">'
+cssTx += '#JmolPane  { left:0px; width:100%; top:' + ( (side=="top") ? "0px" : ((100-h)+"%") ) + '; height:' + h + '%;} '
+cssTx += '#mainPane  { text-align: center; left:0px; width:100%; top:' + ( (side=="top") ? (h+"%") : "0px" ) + '; height:' + (100-h) + '%;} '
+cssTx += '</style>'
+document.writeln(cssTx)
+
+var jmolAppletA;
+
+// logic is set by indicating order of USE -- default is HTML5 for this test page, though
+var use = "HTML5" // JAVA HTML5 WEBGL IMAGE  are all otions
+var s = document.location.search;
+
+Jmol.debugCode = (s.indexOf("debugcode") >= 0);
+
+var xxxx = document.location.search
+
+var Info0 = {
+  width:  "100%",
+  height: "100%",
+  use: "HTML5",
+  debug: false,
+  color: "0xFFFFFF",
+  j2sPath: "./jmol/j2s", // this needs to point to where the j2s directory is.
+  jarPath: "./jmol/java",// this needs to point to where the java directory is.
+  jarFile: "JmolAppletSigned.jar",
+  isSigned: true,
+  serverURL: "./jmol/php/jsmol.php",
+  script: opener.JSmolCloneData.state.replace(/zoomLarge true/i,'zoomLarge false'),
+  use: opener.JSmolCloneData.type ,
+  disableJ2SLoadMonitor: true,
+  disableInitialConsole: true,
+  allowJavaScript: true
+};
+var inds=localStorage.getItem("index");
+</script>
+</head>
+
+<body>
+
+<div id="JmolPane" class="JmolPanels">
+<script type="text/javascript">
+  jmolAppletA = Jmol.getApplet("jmolAppletA", Info0)
+  Jmol.script(JSmolClone,"set platformSpeed " + opener.JSmolCloneData.platformSpeed);
+</script>
+</div>
+
+<div id="mainPane" class="textPanels">
+	<div class="content">
+<script type="text/javascript">
+  Jmol.jmolHtml("<b> Frame: "+ inds +"</b> <br> ");
+</script>
+<!--br />&copy; 2017 <a href="mailto:1sandipde@gmail.com">Sandip De</a--> 
+	</div> <!--content-->
+</div> <!--mainPane-->
+</body>
+</html>
+
