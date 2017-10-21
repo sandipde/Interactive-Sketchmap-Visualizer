@@ -22,10 +22,10 @@ def main(appnames,datafiles,structure_files,extserver=False):
        app.setup(datafiles[i],structure_files[i])
        print ("___________ Success !!_____________")
     if extserver : 
-        print (" run: python server.py  --app ", appnames )
+        print (" run: python server.py  --app ", '  '.join(appnames) )
         print ("_______________________________________" )
     else:
-        print (" run: bokeh serve ", appnames , "--show" )
+        print (" run: bokeh serve ",'  '.join(appnames) , "--show" )
         print ("_______________________________________" )
 
     

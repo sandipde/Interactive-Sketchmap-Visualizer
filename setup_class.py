@@ -31,8 +31,8 @@ class isv():
         
         print("The following Directory will be overwritten if you continue:")
         print (self.rmdir_list)
-        if self.confirm_overwrite() :
-            for dir in self.rmdir_list :
+#        if self.confirm_overwrite() :
+        for dir in self.rmdir_list :
                 if os.path.exists(dir): shutil.rmtree(dir,ignore_errors=True)
 #                os.makedirs(dir)
     def setup(self,datafile,structure_file):
@@ -56,11 +56,15 @@ class isv():
        zname=self.appname+'-static-offline'
        if not os.path.exists('.isv'):os.mkdir('.isv')
        rmpath=os.path.join('.isv','static')
-       if os.path.exists(rmpath): shutil.rmtree(rmpath)
-       shutil.copytree(os.path.join(self.static,'jmol'),os.path.join('.isv','static','jmol'))
-       os.mkdir(os.path.join('.isv','static','css')
+       if os.path.exists(rmpath): 
+          shutil.rmtree(rmpath)
+       os.mkdir(rmpath)
+       os.mkdir(os.path.join('.isv','static','css'))
        shutil.copy2(os.path.join(self.static,'css','w3.css'),os.path.join('.isv','static','css'))
        shutil.copytree(os.path.join(self.static,self.appname+'-structures'),os.path.join('.isv','static',self.appname+'-structures'))
+       shutil.copytree(os.path.join(self.static,'jmol'),os.path.join('.isv','static','jmol'))
+       shutil.copy2(os.path.join(self.static,'pop.html'),os.path.join('.isv','static'))
+       shutil.copy2(os.path.join(self.static,'compare.html'),os.path.join('.isv','static'))
   #     rmpath=os.path.join('.isv','static','js')
   #     if os.path.exists(rmpath): shutil.rmtree(rmpath)
        shutil.copy2(os.path.join(self.approot,'static','README'),os.path.join('.isv','README'))
@@ -94,7 +98,7 @@ class isv():
              fn.write('%d\n%s\n' % (natoms, comment))
              for s, (x, y, z) in zip(symbols, frame.positions):
                  fn.write('%-2s %12.2f %12.2f %12.2f\n' % (s, x, y, z))
-         print("Done !")
+         print("\nDone !")
    
 
     def setup_base(self):
@@ -162,7 +166,6 @@ class isv():
         yes = {'yes','y', 'ye', ''}
         no = {'no','n'}
         while True:
-            print ("Continue ? [y/n]")
             try:
                choice = raw_input("Continue ? [y/n]").lower()
             except: 
