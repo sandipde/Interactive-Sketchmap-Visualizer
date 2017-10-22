@@ -1,4 +1,0 @@
-# RUN a Server with multiple apps
-    Put the apps in the directory and List the name of the apps
-    in a file Applist.dat.
-    run python server.py 
