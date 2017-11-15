@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pandas as pd
 import os
 import argparse
@@ -26,33 +27,39 @@ from bokeh.events import ButtonClick
 from bokeh.models.widgets import RadioGroup,RadioButtonGroup,CheckboxGroup
 from bokeh.models.widgets import DataTable,TableColumn
 from bokeh.embed import components
-from bokeh.resources import CDN
+from bokeh.resources import CDN, INLINE
 from bokeh.plotting import figure
 
 
-def main(dfile,pcol,app_name,title='Sketch-map',pointsize=10,jmol_settings=""):
-    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname
+def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10,jmol_settings=""):
+    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix
     appname=app_name
+    server_prefix=server_static_root
     ps=pointsize
     jmolsettings=jmol_settings
 #initialise data
-    datafile=join(dirname(__file__), 'data', dfile)
+    datafile=join(appname, 'data', dfile)
     cv=smap(name=title)
     cv.read(datafile) 
     n=len(cv.data)
     columns=[i for i in cv.columns]
 
 # set up selection options
-
-    xcol = Select(title='X-Axis', value=columns[pcol[0]-1], options=columns,width=50)
+    tcol=pcol[0]-1
+    xcol = Select(title='X-Axis', value=columns[tcol], options=columns,width=50)
     xcol.on_change('value', update)
-    ycol = Select(title='Y-Axis', value=columns[pcol[1]-1], options=columns, width=50)
+    tcol=pcol[1]-1
+    ycol = Select(title='Y-Axis', value=columns[tcol], options=columns, width=50)
     ycol.on_change('value', update)
     roptions=['None']
     for option in columns: roptions.append(option)
     rcol = Select(title='Size', value='None', options=roptions,width=50)
     rcol.on_change('value', update)
-    ccol = Select(title='Color', value=columns[pcol[2]-1], options=roptions,width=50)
+    if (len(pcol)>2 ):
+      tcol=pcol[2]-1
+      ccol = Select(title='Color', value=columns[tcol], options=roptions,width=50)
+    else:    
+      ccol = Select(title='Color', value='None', options=roptions,width=50)
     ccol.on_change('value', update)
     plt_name = Select(title='Palette',width=50, value='Inferno256', options=["Magma256","Plasma256","Spectral6","Inferno256","Viridis256","Greys256"])
     plt_name.on_change('value', update)
@@ -66,7 +73,6 @@ def main(dfile,pcol,app_name,title='Sketch-map',pointsize=10,jmol_settings=""):
 # create plot and slider
 
     plotpanel=create_plot()
-
 # full layout 
     lay=layout([
         [controls],
@@ -92,7 +98,6 @@ def create_buttons():
     download_widget2=widgetbox(download_button2,width=200,height=50,sizing_mode='fixed')
     dpanel=Row(Spacer(width=170),download_widget1,Spacer(width=10),download_widget2,width=600, sizing_mode='fixed')
     return play_widget,dpanel
-    
     
     
 def create_plot():
@@ -127,7 +132,7 @@ def create_plot():
        var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
-       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/%s-structures/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
@@ -135,18 +140,18 @@ def create_plot():
        """ 
 
 # Set up Slider
-    print jmolsettings
+   # print (jmolsettings)
     iold=0  
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
     slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,appname))
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,server_prefix,appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,server_prefix,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -178,7 +183,7 @@ def create_plot():
 
 def download_extended():
     from bokeh.io import output_file,show
-    from bokeh.resources import CDN
+    from bokeh.resources import CDN, INLINE
     from bokeh.embed import file_html
     from bokeh.embed import autoload_static
     from bokeh.resources import INLINE
@@ -187,7 +192,7 @@ def download_extended():
     import os,zipfile
     from shutil import copyfile
     
-    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname
+    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname,server_prefix
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value 
     p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='')
     # Set up mouse selection callbacks
@@ -215,7 +220,7 @@ def download_extended():
        var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
-       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/%s-structures/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
@@ -223,18 +228,18 @@ def download_extended():
        """ 
 
 # Set up Slider
-    print jmolsettings
+    #print (jmolsettings)
     iold=0  
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
     slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,appname))
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,'.',appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,'.',appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -265,30 +270,37 @@ def download_extended():
 
        
     # Get JavaScript/HTML resources
-    js, tag = autoload_static(plotpanel, CDN, "./") 
-    
+    js, tag = autoload_static(plotpanel, INLINE, "")
+    if (sys.version_info[0] <3):js=js.decode("utf-8") #need this for python 2.7 but not python 3.3  
+#    print "jS",js 
+#    print "TAG",tag
+#    return 
     css=[]
     for f in ["w3"]:
-        css.append(appname+"/static/css/"+f+'.css')
+        css.append("./static/css/"+f+'.css')
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template.html"
+    #print TEMPLATE_FILE
     template = templateEnv.get_template( TEMPLATE_FILE )
-    html = template.render(js_resources=js,div=tag,jmolsettings=jmolsettings,appname=appname,css_files=css,title=title)
-    fbase='sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value 
-    fname=appname+'/static/'+fbase+'.html'
-    zname=appname+'/static/'+fbase+'.zip'
+    html = template.render(js_resources=js,div=tag,jmolsettings=jmolsettings,appname=appname,server_prefix='.',css_files=css,title=title)
+    fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value 
+    fname=os.path.join(server_prefix,'static',fbase+'.html')
+    zname=os.path.join(server_prefix,'static',fbase+'.zip')
  #   fname=fbase+'.html'
-    f=open(fname,'w')
-    f.write(html)
+    if (sys.version_info[0] <3):
+             f=open(fname,'w')   #python 2.7
+    else:
+             f=open(fname,'wb')  #python 3.3
+    f.write(html.encode("utf-8"))
     f.close()
     
 # prepare zip file from template
     if (os.path.isfile(zname)): os.remove(zname)
-    copyfile(appname+'/static/static-offline.zip',zname)
+    copyfile(os.path.join(server_prefix,'static',appname+'-static-offline.zip'),zname)
     zip = zipfile.ZipFile(zname,'a')
     zip.write(fname,fbase+'.html')
-    zip.write(appname+'/static/README','README')
+#    zip.write(os.path.join(server_prefix,'static','README'),'README')
     zip.close()
         
     return CustomJS(code="""
@@ -302,27 +314,34 @@ def download_simple():
     from bokeh.embed import file_html
     from bokeh.embed import autoload_static
     from bokeh.resources import INLINE
+    from bokeh.resources import Resources
 #    from jinja2 import Template
     import jinja2
 
-    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol
+    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,server_prefix
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value
     p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,
                               minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=300,title='')
     spacer1 = Spacer(width=200, height=10)
     spacer2 = Spacer(width=200, height=20)
     plotpanel_static=Row(p1,Column(spacer1,Row(Spacer(width=200),p2),spacer2,table))
-    js, tag = autoload_static(plotpanel_static, CDN, "")
+    js, tag = autoload_static(plotpanel_static, Resources(mode='inline'), "")
+    if (sys.version_info[0] <3):js=js.decode("utf-8") #need this for python 2.7 but not python 3.3  
     templateLoader = jinja2.FileSystemLoader( searchpath="./")
     templateEnv = jinja2.Environment( loader=templateLoader )
     TEMPLATE_FILE = appname+"/templates/offline-template-minimal.html"
+    #print TEMPLATE_FILE
     template = templateEnv.get_template( TEMPLATE_FILE )
-    html = template.render(js_resources=js,div=tag,appname=appname,title=title)
+    html = template.render(js_resources=js,div=tag,appname=appname,title=title,server_prefix=server_prefix)
 #    html = file_html(plotpanel_static, CDN, "my plot")
-    fbase='sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value
-    fname=appname+'/static/'+fbase+'-minimal.html'
-    f=open(fname,'w')
-    f.write(html)
+    fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value
+    fname=os.path.join(server_prefix,'static',fbase+'-minimal.html')
+    if (sys.version_info[0] <3):
+             f=open(fname,'w')   #python 2.7
+    else:
+             f=open(fname,'wb')  #python 3.3
+
+    f.write(html.encode("utf-8"))
     f.close()
     return CustomJS(code="""        
            window.open("%s",title="%s");
@@ -354,12 +373,10 @@ def animate():
 
 
 def update(attr, old, new):
-    global cv,indx,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,extended
+    global cv,indx,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,extended,lay
     plotpanel=create_plot()
     slider_widget=widgetbox(slider,width=800,sizing_mode='fixed')
     lay.children[1] = plotpanel
-
-
 
 
 appname=os.path.basename(dirname(__file__))
@@ -368,17 +385,25 @@ parser.add_argument("-smapdata", default='COLVAR',help="The name of the data fil
 parser.add_argument("-u",  type=str, default='1:2:3',help="columns of the data file to plot eg. -u 1:2:3:4 to plot 1st column vs 2nd column. color the data using 3rd coloumn and 4th column to varry the point size (optional)")
 parser.add_argument("-ps",  type=float, default='10',help="point size")
 parser.add_argument("-jmol",  type=str, default=" ",help="optional: parameters to be used for jmol")
+parser.add_argument("--extserver", action="store_true",help="need to use it if you want to generate configuration to run with externel server")
 #parser.add_argument("-t",  type=str, default='',help="Title of the plot")
 args = parser.parse_args()
-pcol = map(int,args.u.split(':'))
+pcol = list(map(int,args.u.split(':')))
 
-lay=main(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol)
+# in standalone app mode there are now static folder inside the app-folder. We check that to determine which mode we are in.
+server_static_root='.'
+if os.path.exists(os.path.join(appname,'static')):server_static_root=appname
+
+# main calling of the plot
+lay=bkapp(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol,server_static_root=server_static_root)
 curdoc().add_root(lay)
-curdoc().template_variables["js_files"] = [appname+"/static/jmol/JSmol.min.js"]
+curdoc().template_variables["js_files"] = [server_static_root+"/static/jmol/JSmol.min.js"]
 css=[]
 for f in ["w3","introjs"]:
-  css.append(appname+"/static/css/"+f+'.css')
+  css.append(server_static_root+"/static/css/"+f+'.css')
 curdoc().template_variables["css_files"] = css
-curdoc().template_variables["appname"] = [appname]
+curdoc().template_variables["appname"] = appname
 curdoc().template_variables["jmolsettings"] = args.jmol
+curdoc().template_variables["server_prefix"] = server_static_root
 curdoc().title = "Interactive Sketchmap Visualizer"
+

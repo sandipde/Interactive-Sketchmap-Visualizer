@@ -39,7 +39,7 @@ class smap:
     def read_properties(self,propfile,sep='\s+',**kwargs):
         prop=pd.read_csv(propfile,sep=sep,**kwargs)
         if (len(prop) != len(self.data)): 
-            print "data length and property length mismtch"
+            print ("data length and property length mismtch")
             pass
         df=self.pd
         self.pd=pd.concat([df,prop],axis=1)
@@ -74,7 +74,7 @@ class smap:
     	v=v/norm
     	return v-min(v)
 
-    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,**kwargs):
+    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,add_colorbar=True,**kwargs):
         from bokeh.layouts import row, widgetbox,column,Spacer
         from bokeh.models import HoverTool,TapTool,FixedTicker,Circle,WheelZoomTool
         from bokeh.models import CustomJS, Slider,Rect,ColorBar,HoverTool,LinearColorMapper, BasicTicker
@@ -142,7 +142,8 @@ class smap:
             colorbar = ColorBar(color_mapper=color_mapper, ticker=BasicTicker(),label_standoff=4, border_line_color=None, location=(0,0),orientation="vertical")
             colorbar.background_fill_alpha = 0
             colorbar.border_line_alpha = 0
-            plot.add_layout(colorbar, 'left')
+            if add_colorbar:
+               plot.add_layout(colorbar, 'left')
 # Overview plot           
         oplot=figure(title='',plot_width=200, plot_height=200,toolbar_location=None)
         oplot.circle(x,y,source=datasrc,size=4, fill_alpha=0.6, line_color=None,name="mycircle")

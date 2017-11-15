@@ -11,11 +11,11 @@ var Info = {
    debug: false,
    color: "0xFFFFFF",
    use: "HTML5",   // JAVA HTML5 WEBGL are all options
-   j2sPath: "{{dir}}/static/jmol/j2s", // this needs to point to where the j2s directory is.
-   jarPath: "{{dir}}/static/jmol/java",// this needs to point to where the java directory is.
+   j2sPath: "{{server_prefix}}/static/jmol/j2s", // this needs to point to where the j2s directory is.
+   jarPath: "{{server_prefix}}/static/jmol/java",// this needs to point to where the java directory is.
    jarFile: "JmolAppletSigned.jar",
    isSigned: true,
-   script: "set antialiasDisplay; set frank off; load {{dir}}/static/xyz/set.000000.xyz; {{jmolsettings}}" ,
+   script: "set antialiasDisplay; set frank off; load {{server_prefix}}/static/{{appname}}-structures/set.000000.xyz; {{jmolsettings}}" ,
    serverURL: "./jmol/php/jsmol.php",
    readyFunction: jmol_isReady,
    disableJ2SLoadMonitor: true,
@@ -40,7 +40,7 @@ function cloneJSmol(JSmolObject) {
   JSmolCloneData.state = Jmol.getPropertyAsString(JSmolObject, 'stateInfo');
   var inds=localStorage.getItem("indexref") ;
   localStorage.setItem("index",inds);
-  myWindow=window.open('{{dir}}/static/pop.html',inds,'resizable, width=800, height=800, scrollbars, menubars=no, titlebar=no,toolbar=no,location=no,status=yes');
+  myWindow=window.open('{{server_prefix}}/static/pop.html',inds,'resizable, width=800, height=800, scrollbars, menubars=no, titlebar=no,toolbar=no,location=no,status=yes');
 
 };
 
@@ -51,7 +51,7 @@ function holdJSmol(JSmolObject){
    var t = JSmolObject._jmolType; //temp
    JSmolCloneData.type = 'HTML5';
    JSmolCloneData.state = Jmol.getPropertyAsString(JSmolObject, 'stateInfo');
-   myWindow=window.open('{{dir}}/static/compare.html','compare','width=200, height=200, scrollbars, menubars=no');
+   myWindow=window.open('{{server_prefix}}/static/compare.html','compare','width=200, height=200, scrollbars, menubars=no');
    var inds=localStorage.getItem("indexref") ;
    localStorage.setItem("index",inds);
 

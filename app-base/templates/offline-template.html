@@ -5,9 +5,7 @@
             <title>ISV-{{appname}}</title>
             <title>Bokeh Scatter Plots</title>
 
-        <!--link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" type="text/css" />
-        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script-->
-        <script type="text/javascript" src="{{appname}}/static/jmol/JSmol.min.js"></script>
+        <script type="text/javascript" src="{{server_prefix}}/static/jmol/JSmol.min.js"></script>
         <script type="text/javascript">
         inds="000000" ;      // initialization of the local storage used in popup window
         localStorage.setItem("indexref",inds);
@@ -26,11 +24,11 @@
            debug: false,
            color: "0xFFFFFF",
            use: "HTML5",   // JAVA HTML5 WEBGL are all options
-           j2sPath: "{{appname}}/static/jmol/j2s", // this needs to point to where the j2s directory is.
-           jarPath: "{{appname}}/static/jmol/java",// this needs to point to where the java directory is.
+           j2sPath: "{{server_prefix}}/static/jmol/j2s", // this needs to point to where the j2s directory is.
+           jarPath: "{{server_prefix}}/static/jmol/java",// this needs to point to where the java directory is.
            jarFile: "JmolAppletSigned.jar",
            isSigned: true,
-           script: "set antialiasDisplay; set frank off ; load {{appname}}/static/xyz/set.000000.xyz; {{jmolsettings}}" ,
+           script: "set antialiasDisplay; set frank off ; load {{server_prefix}}/static/{{appname}}-structures/set.000000.xyz; {{jmolsettings}}" ,
            serverURL: "./jmol/php/jsmol.php",
            readyFunction: jmol_isReady,
            disableJ2SLoadMonitor: true,
@@ -55,7 +53,7 @@
           JSmolCloneData.state = Jmol.getPropertyAsString(JSmolObject, 'stateInfo');
           var inds=localStorage.getItem("indexref") ;
           localStorage.setItem("index",inds);
-          myWindow=window.open('{{appname}}/static/pop.html',inds,'resizable, width=800, height=800, scrollbars, menubars=no, titlebar=no,toolbar=no,location=no,status=yes');
+          myWindow=window.open('{{server_prefix}}/static/pop.html',inds,'resizable, width=800, height=800, scrollbars, menubars=no, titlebar=no,toolbar=no,location=no,status=yes');
         
         };
         
@@ -66,7 +64,7 @@
            var t = JSmolObject._jmolType; //temp
            JSmolCloneData.type = 'HTML5';
            JSmolCloneData.state = Jmol.getPropertyAsString(JSmolObject, 'stateInfo');
-           myWindow=window.open('{{appname}}/static/compare.html','compare','width=200, height=200, scrollbars, menubars=no');
+           myWindow=window.open('{{server_prefix}}/static/compare.html','compare','width=200, height=200, scrollbars, menubars=no');
            var inds=localStorage.getItem("indexref") ;
            localStorage.setItem("index",inds);
         
@@ -74,7 +72,6 @@
         </script>   
         
         <script type="text/javascript">
-      
             {{ js_resources }}
 
         </script>
