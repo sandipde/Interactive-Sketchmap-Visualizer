@@ -156,7 +156,7 @@ class smap:
                 var end = range.end;
                 data['%s'] = [start + (end - start) / 2];
                 data['%s'] = [end - start];
-                source.trigger('change');
+                source.change.emit();
              """
         plot.x_range.callback = CustomJS(
                args=dict(source=rectsource, range=plot.x_range), code=jscode % ('xs', 'wd'))
@@ -283,7 +283,7 @@ class Distance_matrix:
            for (i = 0; i < x.length; i++) {
                y[i] = 1.-Math.pow(1.+(Math.pow(2.,(a/b))-1.)*Math.pow(x[i]/sigma,a),(-b/a));
            }
-           source.trigger('change');
+           source.change.emit();
         """)
 
         a_slider = Slider(start=1., end=20., value=a, step=1.,title="a", callback=callback)

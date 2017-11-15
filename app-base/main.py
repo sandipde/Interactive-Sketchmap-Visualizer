@@ -23,9 +23,16 @@ from bokeh.models.widgets import Select,TextInput
 from os.path import dirname, join
 from smaplib import *
 from bokeh.events import ButtonClick
+from bokeh.models.widgets import RadioGroup,RadioButtonGroup,CheckboxGroup
 from bokeh.models.widgets import DataTable,TableColumn
-def main(dfile,pcol,appname,title='Sketch-map',pointsize=10,jmol_settings=""):
-    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings
+from bokeh.embed import components
+from bokeh.resources import CDN
+from bokeh.plotting import figure
+
+
+def main(dfile,pcol,app_name,title='Sketch-map',pointsize=10,jmol_settings=""):
+    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname
+    appname=app_name
     ps=pointsize
     jmolsettings=jmol_settings
 #initialise data
@@ -77,12 +84,17 @@ def create_buttons():
 
 
 # Download button 
-    download_button = Button(label="Download Static HTML", button_type="success", width=200 )
-    download_button.js_on_event(ButtonClick, download())
-    download_widget=widgetbox(download_button,width=200,height=50,sizing_mode='fixed')
+    download_button1 = Button(label="Download Minimal HTML", button_type="success", width=150 )
+    download_button2 = Button(label="Download With Structures", button_type="success", width=150 )
+    download_button1.js_on_event(ButtonClick, download_simple())
+    download_button2.js_on_event(ButtonClick, download_extended())
+    download_widget1=widgetbox(download_button1,width=200,height=50,sizing_mode='fixed')
+    download_widget2=widgetbox(download_button2,width=200,height=50,sizing_mode='fixed')
+    dpanel=Row(Spacer(width=170),download_widget1,Spacer(width=10),download_widget2,width=600, sizing_mode='fixed')
+    return play_widget,dpanel
     
-    return play_widget,download_widget
-
+    
+    
 def create_plot():
     global cv,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,controls,ps,jmolsettings
 # Set up main plot
@@ -94,11 +106,12 @@ def create_plot():
 # The following code is very tricky to understand properly. 
 # the %s are the function or variable to pass from python depending on the slider callback or mouse callback. 
 # One could write 3 seperate callbacks to connect slider,jmol and mouse selection but this way it is more compact ! 
+ 
 
     code="""
        var refdata = ref.data;
        var data = source.data;
-       var ind = cb_obj.%s;
+       var ind = %s ;
        Array.prototype.min = function() {
           return Math.min.apply(null, this);
           };
@@ -108,13 +121,13 @@ def create_plot():
        data['xs'] = [xs];
        data['ys'] = [ys];
        data=refdata[inds];
-       source.trigger('change');
+       source.change.emit();
        %s;
        var str = "" + inds;
-       var pad = "0000";
+       var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
-       var file= "javascript:Jmol.script(jmolApplet0," + "'load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
@@ -127,13 +140,13 @@ def create_plot():
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
     slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("value","","",jmolsettings,appname))
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,s=slider), code=code%("selected['1d'].indices",".min()","s.set('value', inds)",jmolsettings,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -158,31 +171,162 @@ def create_plot():
 # create buttons 
     play_widget,download_widget=create_buttons()
     playpanel=Row(play_widget,Spacer(width=30),slider_widget)
-    plotpanel=Row(Column(p1,Spacer(height=40),Row(Spacer(width=260),download_widget)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=50),table))
-
+    plotpanel=Row(Column(p1,Spacer(height=40),Row(Spacer(width=10,height=40),
+                                                     download_widget)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=50),table))
+    
     return plotpanel
 
-def download():
+def download_extended():
     from bokeh.io import output_file,show
     from bokeh.resources import CDN
     from bokeh.embed import file_html
-
-    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol
+    from bokeh.embed import autoload_static
+    from bokeh.resources import INLINE
+    from jinja2 import Template
+    import jinja2
+    import os,zipfile
+    from shutil import copyfile
+    
+    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value 
-    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=300,title=title)
-    spacer1 = Spacer(width=200, height=10)
-    spacer2 = Spacer(width=200, height=20)
-    plotpanel=Row(p1,Column(spacer1,p2,spacer2,table))
-    html = file_html(plotpanel, CDN, "my plot")
+    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='')
+    # Set up mouse selection callbacks
+
+
+# The following code is very tricky to understand properly. 
+# the %s are the function or variable to pass from python depending on the slider callback or mouse callback. 
+# One could write 3 seperate callbacks to connect slider,jmol and mouse selection but this way it is more compact ! 
+    code="""
+       var refdata = ref.data;
+       var data = source.data;
+       var ind = %s ;
+       Array.prototype.min = function() {
+          return Math.min.apply(null, this);
+          };
+       var inds =ind%s;
+       var xs = refdata['x'][inds];
+       var ys = refdata['y'][inds];
+       data['xs'] = [xs];
+       data['ys'] = [ys];
+       data=refdata[inds];
+       source.change.emit();
+       %s;
+       var str = "" + inds;
+       var pad = "000000";
+       var indx = pad.substring(0, pad.length - str.length) + str;
+       var settings= "%s" ; 
+       var file= "javascript:Jmol.script(jmolApplet0," + "'set frank off; load  %s/static/xyz/set."+ indx+ ".xyz ;" + settings + "')" ;
+       location.href=file;
+       localStorage.setItem("indexref",indx);
+       document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
+       
+       """ 
+
+# Set up Slider
+    print jmolsettings
+    iold=0  
+    selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
+    refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
+    slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,appname))
+    slider.js_on_change('value', slider_callback)
+    slider.on_change('value', slider_update)
+
+#set up mouse
+    callback=CustomJS(
+         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,appname))
+    taptool = p1.select(type=TapTool)
+    taptool.callback = callback
+    p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
+
+# Draw Selection on Overview Plot
+ 
+    p2.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=8,name="mycircle")
+    
+#    spacer1 = Spacer(width=200, height=20)
+#    spacer2 = Spacer(width=200, height=170)
+#    plotpanel=Row(p1,Column(spacer1,p2,spacer2,table))    
+
+    # layout stuffs 
+    spacer1 = Spacer(width=200, height=30)
+    spacer2 = Spacer(width=200, height=170)
+    indx=0
+    xval=cv.pd[xcol.value][indx]
+    yval=cv.pd[ycol.value][indx]
+
+#slider
+    slider_widget=widgetbox(slider,width=400,height=50,sizing_mode='fixed')
+    spacer = Spacer(width=300, height=50)
+
+# create buttons 
+#    play_widget,download_widget=create_buttons()
+    playpanel=Row(Spacer(width=80),slider_widget)
+    plotpanel=Row(Column(p1,Spacer(height=40)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=50),table))
+
+       
+    # Get JavaScript/HTML resources
+    js, tag = autoload_static(plotpanel, CDN, "./") 
+    
+    css=[]
+    for f in ["w3"]:
+        css.append(appname+"/static/css/"+f+'.css')
+    templateLoader = jinja2.FileSystemLoader( searchpath="./")
+    templateEnv = jinja2.Environment( loader=templateLoader )
+    TEMPLATE_FILE = appname+"/templates/offline-template.html"
+    template = templateEnv.get_template( TEMPLATE_FILE )
+    html = template.render(js_resources=js,div=tag,jmolsettings=jmolsettings,appname=appname,css_files=css,title=title)
     fbase='sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value 
     fname=appname+'/static/'+fbase+'.html'
+    zname=appname+'/static/'+fbase+'.zip'
+ #   fname=fbase+'.html'
     f=open(fname,'w')
     f.write(html)
+    f.close()
+    
+# prepare zip file from template
+    if (os.path.isfile(zname)): os.remove(zname)
+    copyfile(appname+'/static/static-offline.zip',zname)
+    zip = zipfile.ZipFile(zname,'a')
+    zip.write(fname,fbase+'.html')
+    zip.write(appname+'/static/README','README')
+    zip.close()
+        
     return CustomJS(code="""
+           alert('Extended offline html file might fail to load on your browser. Refer to README file in download for solution. ');
            window.open("%s",title="%s");
-           """ % (fname,fbase))
+           """ % (zname,fbase))
  
-   
+def download_simple():
+    from bokeh.io import output_file,show
+    from bokeh.resources import CDN
+    from bokeh.embed import file_html
+    from bokeh.embed import autoload_static
+    from bokeh.resources import INLINE
+#    from jinja2 import Template
+    import jinja2
+
+    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol
+    title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value
+    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,
+                              minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=300,title='')
+    spacer1 = Spacer(width=200, height=10)
+    spacer2 = Spacer(width=200, height=20)
+    plotpanel_static=Row(p1,Column(spacer1,Row(Spacer(width=200),p2),spacer2,table))
+    js, tag = autoload_static(plotpanel_static, CDN, "")
+    templateLoader = jinja2.FileSystemLoader( searchpath="./")
+    templateEnv = jinja2.Environment( loader=templateLoader )
+    TEMPLATE_FILE = appname+"/templates/offline-template-minimal.html"
+    template = templateEnv.get_template( TEMPLATE_FILE )
+    html = template.render(js_resources=js,div=tag,appname=appname,title=title)
+#    html = file_html(plotpanel_static, CDN, "my plot")
+    fbase='sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value
+    fname=appname+'/static/'+fbase+'-minimal.html'
+    f=open(fname,'w')
+    f.write(html)
+    f.close()
+    return CustomJS(code="""        
+           window.open("%s",title="%s");
+           """ % (fname,fbase))   
 
 def animate_update():
     global indx,n
@@ -210,7 +354,7 @@ def animate():
 
 
 def update(attr, old, new):
-    global cv,indx,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol
+    global cv,indx,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,extended
     plotpanel=create_plot()
     slider_widget=widgetbox(slider,width=800,sizing_mode='fixed')
     lay.children[1] = plotpanel
@@ -228,7 +372,7 @@ parser.add_argument("-jmol",  type=str, default=" ",help="optional: parameters t
 args = parser.parse_args()
 pcol = map(int,args.u.split(':'))
 
-lay=main(dfile='COLVAR',pcol=pcol,appname=appname,pointsize=args.ps,jmol_settings=args.jmol)
+lay=main(dfile='COLVAR',pcol=pcol,app_name=appname,pointsize=args.ps,jmol_settings=args.jmol)
 curdoc().add_root(lay)
 curdoc().template_variables["js_files"] = [appname+"/static/jmol/JSmol.min.js"]
 css=[]

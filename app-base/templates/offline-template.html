@@ -1,0 +1,148 @@
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <title>ISV-{{appname}}</title>
+            <title>Bokeh Scatter Plots</title>
+
+        <!--link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" type="text/css" />
+        <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script-->
+        <script type="text/javascript" src="{{appname}}/static/jmol/JSmol.min.js"></script>
+        <script type="text/javascript">
+        inds="000000" ;      // initialization of the local storage used in popup window
+        localStorage.setItem("indexref",inds);
+        </script>
+        <script type="text/javascript">
+        Jmol._isAsync = false;
+        var jmolApplet0; // set up in HTML table, below
+        jmol_isReady = function(applet) {
+        document.title = (applet._id + " - Jmol " + Jmol.___JmolVersion)
+        // Jmol._getElement(applet, "appletdiv").style.border="10px solid blue"
+        }
+        
+        var Info = {
+           width: '100%',
+           height: '100%',
+           debug: false,
+           color: "0xFFFFFF",
+           use: "HTML5",   // JAVA HTML5 WEBGL are all options
+           j2sPath: "{{appname}}/static/jmol/j2s", // this needs to point to where the j2s directory is.
+           jarPath: "{{appname}}/static/jmol/java",// this needs to point to where the java directory is.
+           jarFile: "JmolAppletSigned.jar",
+           isSigned: true,
+           script: "set antialiasDisplay; set frank off ; load {{appname}}/static/xyz/set.000000.xyz; {{jmolsettings}}" ,
+           serverURL: "./jmol/php/jsmol.php",
+           readyFunction: jmol_isReady,
+           disableJ2SLoadMonitor: true,
+           disableInitialConsole: true,
+           allowJavaScript: true
+        };
+        
+        $(document).ready(function() {
+        $("#appdiv").html(Jmol.getAppletHtml("jmolApplet0", Info))
+        });
+        var lastPrompt=0;
+        
+        var JSmolCloneData = {};
+        function cloneJSmol(JSmolObject) {
+          var t = JSmolObject._jmolType; //temp
+          if ( /_Canvas2D/.test(t) ) { t = 'HTML5'; }
+          else if ( /_Canvas3D/.test(t) ) { t = 'WebGL'; }
+          else if ( /_Applet/.test(t) ) { t = 'Java'; }
+          else { t = null; }
+          JSmolCloneData.type = t;
+          JSmolCloneData.platformSpeed = Jmol.evaluate(JSmolObject, 'platformSpeed + 0');
+          JSmolCloneData.state = Jmol.getPropertyAsString(JSmolObject, 'stateInfo');
+          var inds=localStorage.getItem("indexref") ;
+          localStorage.setItem("index",inds);
+          myWindow=window.open('{{appname}}/static/pop.html',inds,'resizable, width=800, height=800, scrollbars, menubars=no, titlebar=no,toolbar=no,location=no,status=yes');
+        
+        };
+        
+        
+        var inds=localStorage.getItem("index");
+        
+        function holdJSmol(JSmolObject){
+           var t = JSmolObject._jmolType; //temp
+           JSmolCloneData.type = 'HTML5';
+           JSmolCloneData.state = Jmol.getPropertyAsString(JSmolObject, 'stateInfo');
+           myWindow=window.open('{{appname}}/static/compare.html','compare','width=200, height=200, scrollbars, menubars=no');
+           var inds=localStorage.getItem("indexref") ;
+           localStorage.setItem("index",inds);
+        
+        };
+        </script>   
+        
+        <script type="text/javascript">
+      
+            {{ js_resources }}
+
+        </script>
+         {%- for file in css_files %}
+            <link rel="stylesheet" href="{{file}}">
+         {%- endfor %}
+         <style type="text/css">
+                .button {
+                border-radius: 10px;
+                background-color: #5cb85c ;
+                border: none;
+                color: #FFFFFF;
+                text-align: center;
+                font-size: 10px;
+                padding: 5px;
+                width: 80px;
+                transition: all 0.5s;
+                cursor: pointer;
+                margin: 5px;
+              }
+         
+              .button span {
+                cursor: pointer;
+                display: inline-block;
+                position: relative;
+                transition: 0.5s;
+              }
+         
+              .button span:after {
+                content: '>>';
+                position: absolute;
+                opacity: 0;
+                top: 0;
+                right: -20px;
+                transition: 0.5s;
+              }
+         
+              .button:hover span {
+                padding-right: 25px;
+              }
+         
+              .button:hover span:after {
+                opacity: 1;
+                right: 0;
+
+         </style>
+        </head>
+        <body>
+          <header class="w3-container w3-center  w3-blue-grey"><h2>Interactive Sketchmap Visualizer</h2> <h6>{{title}}</h6> 
+          </header>
+       
+        <div  class="w3-container w3-center" style="width:1200px;">
+         <div class="w3-row">
+           <div class="w3-container w3-col" style="width:70%">
+             {{div}}
+           </div>
+           <div class="w3-center" style="width:390px ;height: 350px ;position:absolute; left:950px" >
+              <div class=" w3-center w3-cell-middle" id="viewer">
+                  <div id="p1" class="w3-tag" style="background-color: #5cb85c" > Selected frame: 000000</div>
+                  <div class="w3-center" style="width:100% ; height:350px"  id="appdiv">  </div>
+                  <button id="step4" class="button" href="javascript:void(0);"  onclick='holdJSmol(jmolApplet0);'><span>Hold </span> </button>
+                  <button id="step3" class="button" href="javascript:void(0);" onclick='cloneJSmol(jmolApplet0);'> <span>Analyse </span></button>
+             </div>
+         
+        </div>
+        <div  id="appdiv2" style="position:absolute; top: 320px ;left: 740px ;width: 200px ; height: 200px " >
+            <iframe name='compare' width="200" height="200" frameborder="0" > </iframe>
+        </div>
+        </div>
+        </body>
+    </html>

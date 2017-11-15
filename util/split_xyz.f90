@@ -3,13 +3,13 @@ implicit none
 integer::iat,nat,i,j,k,iframe,stat
 real(8)::rxyz(3),c(9)
 character(len=2)::atname
-character(len=4)::fn
-character(len=12)::filename
+character(len=6)::fn
+character(len=14)::filename
 iframe=0
 do while (1==1)
 read(*,*,IOSTAT=stat)nat 
 IF(IS_IOSTAT_END(stat)) STOP
-write(fn,'(I4.4)') iframe
+write(fn,'(I6.6)') iframe
 filename='set.'//fn//'.xyz'
 open(1,file=filename)
 read(*,*) 
