@@ -9,10 +9,10 @@
     git clone https://github.com/sandipde/Interactive-Sketchmap-Visualizer.git
     cd Interactive Sketchmap Visualizer/example
     sudo pip install jinja2 pyyaml argparse tornado==4.5.2 numpy bokeh==0.12.9 pandas selenium pillow ase
-    python ../build.py --data --data Arginine-Dipeptide.dat  Qm7b.dat --traj traj-Arginine-Dipeptide.xyz traj-qm7b.xyz
+    python ../build.py --data Arginine-Dipeptide.dat  Qm7b.dat --traj traj-Arginine-Dipeptide.xyz traj-qm7b.xyz
     bokeh serve Arginine-Dipeptide Qm7b --show
  
-# Usage Scenerio 1: Build independent apps 
+# Usage Scenario 1: Build independent apps 
 
 Independent apps are portable and contain all resources in one folder. SO if you just need to make one or two apps this is the option you want. SRCPATH= is the directory when you have cloned the repository 
                                         
@@ -31,7 +31,7 @@ Independent apps are portable and contain all resources in one folder. SO if you
         bokeh  serve MAPbI --show  --args -u 1:2:4 -ps 10 -jmol "connect 1.0 1.2 (carbon) (hydrogen) SINGLE CREATE ;            connect 1.0 1.2 (nitrogen) (hydrogen) SINGLE CREATE ; connect 1.0 4.2 (carbon) (nitrogen) SINGLE CREATE ; connect 3.0 6 (phosphorus) (iodine) SINGLE CREATE ; set perspectiveDepth OFF " 
  
  
-# Usage Scenerio 2: Build Custom app server
+# Usage Scenario 2: Build Custom app server
 
 The problem with independent apps are that they all need their own static resources. If you have multiple apps, this means that you end of having same javascript libraries multiple times and waste the server disk space. To tell the build.py script that you intend to make a server, you just need to supply one additional flag '--extserver'
 
