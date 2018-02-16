@@ -19,7 +19,7 @@ from bokeh.models import HoverTool,TapTool,FixedTicker,Circle
 from bokeh.models import BoxSelectTool, LassoSelectTool
 from bokeh.plotting import figure
 from bokeh.layouts import row, widgetbox
-from bokeh.models.widgets import Select,TextInput
+from bokeh.models.widgets import Select,TextInput,CheckboxButtonGroup,RangeSlider
 #from cosmo import create_plot
 from os.path import dirname, join
 from smaplib import *
@@ -32,7 +32,7 @@ from bokeh.plotting import figure
 
 
 def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10,jmol_settings=""):
-    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix
+    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix,periodic_checkbox
     appname=app_name
     server_prefix=server_static_root
     ps=pointsize
@@ -61,14 +61,18 @@ def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10
     else:    
       ccol = Select(title='Color', value='None', options=roptions,width=50)
     ccol.on_change('value', update)
+    periodic_checkbox=CheckboxGroup(labels=["Periodic"], active=[])
+    periodic_checkbox.on_change('active',update)
+
     plt_name = Select(title='Palette',width=50, value='Inferno256', options=["Magma256","Plasma256","Spectral6","Inferno256","Viridis256","Greys256"])
     plt_name.on_change('value', update)
     xm=widgetbox(xcol,width=210,sizing_mode='fixed')
     ym=widgetbox(ycol,width=210,sizing_mode='fixed')
-    cm=widgetbox(ccol,width=210,sizing_mode='fixed')
+    cm=widgetbox(ccol,width=140,sizing_mode='fixed')
+    cp=widgetbox(periodic_checkbox,width=110,sizing_mode='fixed')
     rm=widgetbox(rcol,width=210,sizing_mode='fixed')
     pm=widgetbox(plt_name,width=210,sizing_mode='fixed')
-    controls = Row(xm, ym, cm,rm, pm, width=1050, sizing_mode='scale_width')
+    controls = Row(xm, ym, cm,cp,rm, pm, width=1050, sizing_mode='scale_width')
 
 # create plot and slider
 
@@ -101,9 +105,11 @@ def create_buttons():
     
     
 def create_plot():
-    global cv,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,controls,ps,jmolsettings
+    global cv,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,controls,ps,jmolsettings,Periodic_color
 # Set up main plot
-    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=ps,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_height=170)
+    Periodic_color=False
+    if len(periodic_checkbox.active)>0: Periodic_color=True
+    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=ps,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_height=170,Periodic_color=Periodic_color,return_datasrc=True)
 
 # Set up mouse selection callbacks
 
@@ -121,6 +127,7 @@ def create_plot():
           return Math.min.apply(null, this);
           };
        var inds =ind%s;
+       console.log(inds);
        var xs = refdata['x'][inds];
        var ys = refdata['y'][inds];
        data['xs'] = [xs];
@@ -151,9 +158,10 @@ def create_plot():
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,server_prefix,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotdata=plotdatasrc), code=code%("plotdata.selected['1d'].indices",".min()","slider.value=inds",jmolsettings,server_prefix,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
+  #  p1.add_tools(HoverTool(tooltips=None, callback=callback)) #test
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
 
 # Draw Selection on Overview Plot
@@ -192,9 +200,9 @@ def download_extended():
     import os,zipfile
     from shutil import copyfile
     
-    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname,server_prefix
+    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname,server_prefix,Periodic_color
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value 
-    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='')
+    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='',Periodic_color=Periodic_color,return_datasrc=True)
     # Set up mouse selection callbacks
 
 
@@ -239,7 +247,7 @@ def download_extended():
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_data.source['selected']['1d'].indices",".min()","slider.set('value', inds)",jmolsettings,'.',appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("plotsrc.selected['1d'].indices",".min()","slider.value=inds",jmolsettings,'.',appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
@@ -370,10 +378,8 @@ def animate():
 
 
 
-
-
 def update(attr, old, new):
-    global cv,indx,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,extended,lay
+    global cv,indx,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,extended,lay,Periodic_color
     plotpanel=create_plot()
     slider_widget=widgetbox(slider,width=800,sizing_mode='fixed')
     lay.children[1] = plotpanel
