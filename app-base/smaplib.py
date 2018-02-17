@@ -74,13 +74,14 @@ class smap:
     	v=v/norm
     	return v-min(v)
 
-    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,add_colorbar=True,Periodic_color=False,return_datasrc=False,frac_load=1.0,**kwargs):
+    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,add_colorbar=True,Periodic_color=False,return_datasrc=False,frac_load=1.0,marker=['circle'],**kwargs):
         from bokeh.layouts import row, widgetbox,column,Spacer
         from bokeh.models import HoverTool,TapTool,FixedTicker,Circle,WheelZoomTool
         from bokeh.models import CustomJS, Slider,Rect,ColorBar,HoverTool,LinearColorMapper, BasicTicker
         from bokeh.plotting import figure
+        import bokeh.models.markers as Bokeh_markers
         from bokeh.models import ColumnDataSource, CDSView, IndexFilter
-        from bokeh.palettes import Spectral6,Inferno256,Viridis256,Greys256,Magma256,Plasma256
+        from bokeh.palettes import all_palettes,Spectral6,Inferno256,Viridis256,Greys256,Magma256,Plasma256
         from bokeh.palettes import Spectral,Inferno,Viridis,Greys,Magma,Plasma
         from bokeh.models import LogColorMapper, LogTicker, ColorBar,BasicTicker,LinearColorMapper
         from bokeh.models.widgets import DataTable,TableColumn,NumberFormatter,Div
@@ -93,7 +94,9 @@ class smap:
         np.random.shuffle(idx)
         idload=np.sort(idx[0:nload])
         data=self.pd.iloc[idload].copy()
-        COLORS=locals()[palette]
+        if palette=='cosmo':COLORS=cosmo()
+        else: COLORS=locals()[palette]
+        if marker[0]=='variable':marker=['circle','diamond','triangle','square','asterisk','cross','inverted_triangle']
        # TOOLS="resize,crosshair,pan,wheel_zoom,reset,tap,save,box_select,box_zoom,lasso_select"
         TOOLS="pan,reset,tap,save,box_zoom,lasso_select"
         wheel_zoom=WheelZoomTool(dimensions='both')
@@ -114,9 +117,10 @@ class smap:
 
 
 # selection glyphs and plot styles
+        mdict={'circle':'Circle','diamond':'Diamond','triangle':'Triangle','square':'Square','asterisk':'Asterisk','cross':'Cross','inverted_triangle':'InvertedTriangle'}
         initial_circle = Circle(x='x', y='y')
-        selected_circle = Circle(fill_alpha=0.7, fill_color="blue", size=ps*1.5 ,line_color=None)
-        nonselected_circle = Circle(fill_alpha=alpha*0.5,fill_color='colors',line_color=None)
+        selected_circle = getattr(Bokeh_markers,mdict[marker[0]])(fill_alpha=0.7, fill_color="blue", size=ps*1.5 ,line_color="blue")
+        nonselected_circle = getattr(Bokeh_markers,mdict[marker[0]])(fill_alpha=alpha*0.5,fill_color='colors',line_color='colors',line_alpha=alpha*0.5)
 # set up variable point size
         if radii == 'None':
             r=[ps for i in range(len(data))]
@@ -140,29 +144,50 @@ class smap:
            c = ["#31AADE" for i in range(len(data))]
            data['colors']=c
            datasrc=ColumnDataSource(data)
-           plot.circle(x,y,source=datasrc,size='radii',fill_color='colors', fill_alpha=alpha, line_color=None,name="mycircle")
+           getattr(plot,marker[0])(x,y,source=datasrc,size='radii',fill_color='colors', fill_alpha=alpha, line_color='colors',line_alpha=alpha,name="mycircle")
            renderer = plot.select(name="mycircle")
            renderer.selection_glyph = selected_circle
            renderer.nonselection_glyph = nonselected_circle
         else:
             if data[color].dtype=='object' :    # Categorical variable for colors
                 grouped=data.groupby(color)
-                COLORS=Spectral[len(grouped)]
+               # COLORS=Spectral[len(grouped)]
                 i=0
+                nc=len(COLORS)
+                istep=int(nc/len(grouped))
+                cat_colors=[]
                 for group_item in grouped.groups.keys():
-                    data.loc[grouped.groups[group_item],'colors']=COLORS[i]
-                    i+=1
+                  #  data.loc[grouped.groups[group_item],'colors']=COLORS[i]
+                   # print(group_item,COLORS[i])
+                    i=min(i+istep,nc-1)
+                    cat_colors.append(COLORS[i])
                 #colors=[ '#d53e4f', '#3288bd','#fee08b', '#99d594']
                 datasrc=ColumnDataSource(data)
-                for  group_item in grouped.groups.keys():
-                    view = CDSView(source=datasrc, filters=[IndexFilter(grouped.groups[group_item])])
-                    plot.circle(x,y,source=datasrc,size='radii',fill_color='colors',muted_color='colors', muted_alpha=0.2, fill_alpha=alpha, line_color=None,name='mycircle',legend=group_item,view=view)
-                renderer = plot.select(name="mycircle")
-                renderer.selection_glyph = selected_circle
-                renderer.nonselection_glyph = nonselected_circle
+                view=[]
+               # used_markers=[]
+               # marker=['circle','diamond','triangle','square','asterisk','cross','inverted_triangle']
+                #while True:
+                #    for x in marker: 
+                #        used_markers.append(x)
+                #    if len(used_markers)>len(grouped): break
+                i=0
+                #print used_markers
+                for group_item in grouped.groups.keys():
+                    view.append(CDSView(source=datasrc, filters=[IndexFilter(grouped.groups[group_item])]))
+                    cname='mycircle'+str(i)
+                    #print used_markers[i]
+                    try:mk=marker[i]
+                    except:mk=marker[0]
+                    getattr(plot,mk)(x,y,source=datasrc,size='radii',fill_color=cat_colors[i],muted_color=cat_colors[i], muted_alpha=0.2, fill_alpha=alpha,line_alpha=alpha, line_color=cat_colors[i],name=cname,legend=group_item,view=view[i])
+                    selected_mk = getattr(Bokeh_markers,mdict[mk])(fill_alpha=0.7, fill_color="blue", size=ps*1.5 ,line_color="blue",line_alpha=0.7)
+                    nonselected_mk = getattr(Bokeh_markers,mdict[mk])(fill_alpha=alpha*0.5,fill_color=cat_colors[i],line_color=cat_colors[i],line_alpha=alpha*0.5)
+                    renderer = plot.select(name=cname)
+                    renderer.selection_glyph = selected_mk
+                    renderer.nonselection_glyph = nonselected_mk
+                    i+=1
                 plot.legend.location = "top_left"
                 plot.legend.orientation = "vertical"
-                plot.legend.click_policy="mute"
+                plot.legend.click_policy="hide"
 	    else:
                 if Periodic_color: # if periodic property then generate periodic color palatte
                      blendcolor=interpolate(COLORS[-1],COLORS[0],len(COLORS)/5)
@@ -171,7 +196,7 @@ class smap:
                 c = [COLORS[xx] for xx in groups.codes]
                 data['colors']=c
                 datasrc=ColumnDataSource(data)
-                plot.circle(x,y,source=datasrc,size='radii',fill_color='colors', fill_alpha=alpha, line_color=None,name="mycircle")
+                getattr(plot,marker[0])(x,y,source=datasrc,size='radii',fill_color='colors', fill_alpha=alpha, line_color='colors',line_alpha=alpha,name="mycircle")
                 renderer = plot.select(name="mycircle")
                 renderer.selection_glyph = selected_circle
                 renderer.nonselection_glyph = nonselected_circle
@@ -422,3 +447,7 @@ def printchart(startcolor, endcolor, steps):
 
     for color in colors:
         print color
+
+def cosmo():
+    color=['#ff8000', '#fb7d02', '#f87b04', '#f57906', '#f17708', '#ee750a', '#eb730d', '#e8710f', '#e46f11', '#e16d13', '#de6b15', '#da6918', '#d7671a', '#d4651c', '#d1631e', '#cd6120', '#ca5f23', '#c75d25', '#c45b27', '#c05929', '#bd572b', '#ba552e', '#b65330', '#b35132', '#b04f34', '#ad4d36', '#a94a39', '#a6483b', '#a3463d', '#a0443f', '#9c4241', '#994044', '#963e46', '#923c48', '#8f3a4a', '#8c384c', '#89364f', '#853451', '#823253', '#7f3055', '#7c2e57', '#782c5a', '#752a5c', '#72285e', '#6e2660', '#6b2462', '#682265', '#652067', '#611e69', '#5e1c6b', '#5b1a6d', '#581870', '#571871', '#571972', '#571974', '#561a75', '#561a76', '#561b78', '#561b79', '#551c7a', '#551d7c', '#551d7d', '#551e7f', '#541e80', '#541f81', '#541f83', '#542084', '#532185', '#532187', '#532288', '#53228a', '#52238b', '#52238c', '#52248e', '#52258f', '#512590', '#512692', '#512693', '#512795', '#502796', '#502897', '#502999', '#50299a', '#4f2a9b', '#4f2a9d', '#4f2b9e', '#4f2ba0', '#4e2ca1', '#4e2da2', '#4e2da4', '#4e2ea5', '#4d2ea6', '#4d2fa8', '#4d2fa9', '#4d30ab', '#4c31ac', '#4c31ad', '#4c32af', '#4c32b0', '#4b33b1', '#4b33b3', '#4b34b4', '#4b35b6', '#4b36b6', '#4b37b7', '#4b39b8', '#4c3ab9', '#4c3cba', '#4c3dbb', '#4c3fbc', '#4d40bd', '#4d41bd', '#4d43be', '#4d44bf', '#4e46c0', '#4e47c1', '#4e49c2', '#4e4ac3', '#4f4bc4', '#4f4dc5', '#4f4ec5', '#4f50c6', '#5051c7', '#5053c8', '#5054c9', '#5055ca', '#5157cb', '#5158cc', '#515acc', '#515bcd', '#525dce', '#525ecf', '#525fd0', '#5261d1', '#5362d2', '#5364d3', '#5365d3', '#5367d4', '#5468d5', '#5469d6', '#546bd7', '#546cd8', '#556ed9', '#556fda', '#5571db', '#5572db', '#5673dc', '#5675dd', '#5676de', '#5678df', '#5779e0', '#577be1', '#577ce2', '#587ee3', '#597fe3', '#5a81e3', '#5b82e4', '#5d84e4', '#5e86e5', '#5f87e5', '#6189e6', '#628be6', '#638ce7', '#658ee7', '#668fe8', '#6791e8', '#6993e9', '#6a94e9', '#6b96ea', '#6d98ea', '#6e99eb', '#6f9beb', '#709cec', '#729eec', '#73a0ed', '#74a1ed', '#76a3ee', '#77a5ee', '#78a6ef', '#7aa8ef', '#7ba9f0', '#7cabf0', '#7eadf1', '#7faef1', '#80b0f2', '#82b2f2', '#83b3f3', '#84b5f3', '#85b6f4', '#87b8f4', '#88baf5', '#89bbf5', '#8bbdf6', '#8cbff6', '#8dc0f7', '#8fc2f7', '#90c3f8', '#91c5f8', '#93c7f9', '#94c8f9', '#95cafa', '#97ccfa', '#98cdfb', '#99cffb', '#9bd1fc', '#9cd1fb', '#9ed2fb', '#a0d3fb', '#a2d3fb', '#a3d4fb', '#a5d5fb', '#a7d5fb', '#a9d6fa', '#aad7fa', '#acd8fa', '#aed8fa', '#b0d9fa', '#b1dafa', '#b3dafa', '#b5dbf9', '#b7dcf9', '#b9ddf9', '#baddf9', '#bcdef9', '#bedff9', '#c0dff9', '#c1e0f8', '#c3e1f8', '#c5e1f8', '#c7e2f8', '#c8e3f8', '#cae4f8', '#cce4f8', '#cee5f8', '#cfe6f7', '#d1e6f7', '#d3e7f7', '#d5e8f7', '#d7e9f7', '#d8e9f7', '#daeaf7', '#dcebf6', '#deebf6', '#dfecf6', '#e1edf6', '#e3edf6', '#e5eef6', '#e6eff6', '#e8f0f5', '#eaf0f5', '#ecf1f5', '#edf2f5', '#eff2f5', '#f1f3f5', '#f3f4f5', '#f5f5f5']
+    return color

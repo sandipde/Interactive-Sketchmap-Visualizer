@@ -8,9 +8,9 @@
 
     git clone https://github.com/sandipde/Interactive-Sketchmap-Visualizer.git
     cd Interactive Sketchmap Visualizer/example
-    sudo pip install jinja2 pyyaml argparse tornado==4.5.2 numpy bokeh==0.12.9 pandas selenium pillow ase
-    python ../build.py  --data Arginine-Dipeptide.dat  Qm7b.dat --traj traj-Arginine-Dipeptide.xyz traj-qm7b.xyz
-    bokeh serve Arginine-Dipeptide Qm7b --show
+    sudo pip install jinja2 pyyaml argparse tornado==4.5.3 numpy bokeh==0.12.14 pandas selenium pillow ase
+    python ../build.py  --data Arginine-Dipeptide.dat  Qm7b.dat Pyrole.dat --traj traj-Arginine-Dipeptide.xyz traj-qm7b.xyz traj-Pyrole.xyz
+    bokeh serve Arginine-Dipeptide Qm7b Pyrole --show
  
 # Usage Scenerio 1: Build independent apps 
 
@@ -28,7 +28,7 @@ Independent apps are portable and contain all resources in one folder. SO if you
  
  It means start bokeh server to plot using the first two columns in the COLVAR file present in example-app/data/ folder. Use 3rd column as color and pointsize set to 10. You are also supplying an additional jmol option. jmol options can be as complex as you want and allows for customzing the display, eg.
  
-        bokeh  serve MAPbI --show  --args -u 1:2:4 -ps 10 -jmol "connect 1.0 1.2 (carbon) (hydrogen) SINGLE CREATE ;            connect 1.0 1.2 (nitrogen) (hydrogen) SINGLE CREATE ; connect 1.0 4.2 (carbon) (nitrogen) SINGLE CREATE ; connect 3.0 6 (phosphorus) (iodine) SINGLE CREATE ; set perspectiveDepth OFF " 
+        bokeh  serve myapp --show  --args -u 1:2:4 -ps 10 -jmol "connect 1.0 1.2 (carbon) (hydrogen) SINGLE CREATE ;            connect 1.0 1.2 (nitrogen) (hydrogen) SINGLE CREATE ; connect 1.0 4.2 (carbon) (nitrogen) SINGLE CREATE ; connect 3.0 6 (phosphorus) (iodine) SINGLE CREATE ; set perspectiveDepth OFF " 
  
  
 # Usage Scenerio 2: Build Custom app server
@@ -60,6 +60,7 @@ Datafile format containing the sketchmap and property data
   
      :              :
 
+We support both neumerical and Categorical data. See example/Pyrole.dat for example.
 The trajectory files are read through ase interface. All the formats supported by ase are naturally supported from now on.
 Get the full list of supported input from https://wiki.fysik.dtu.dk/ase/ase/io/io.html
 
