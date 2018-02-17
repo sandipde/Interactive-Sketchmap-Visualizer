@@ -92,7 +92,7 @@ class smap:
         nload=int(frac_load*len(fulldata))
         np.random.shuffle(idx)
         idload=np.sort(idx[0:nload])
-        data=self.pd.iloc[idload]
+        data=self.pd.iloc[idload].copy()
         COLORS=locals()[palette]
        # TOOLS="resize,crosshair,pan,wheel_zoom,reset,tap,save,box_select,box_zoom,lasso_select"
         TOOLS="pan,reset,tap,save,box_zoom,lasso_select"
@@ -115,8 +115,8 @@ class smap:
 
 # selection glyphs and plot styles
         initial_circle = Circle(x='x', y='y')
-        selected_circle = Circle(fill_alpha=0.7, fill_color="blue", size=25 ,line_color=None)
-        nonselected_circle = Circle(fill_alpha=0.5,fill_color='colors',line_color=None)
+        selected_circle = Circle(fill_alpha=0.7, fill_color="blue", size=ps*1.5 ,line_color=None)
+        nonselected_circle = Circle(fill_alpha=alpha*0.5,fill_color='colors',line_color=None)
 # set up variable point size
         if radii == 'None':
             r=[ps for i in range(len(data))]
@@ -205,8 +205,11 @@ class smap:
         oplot.add_glyph(rectsource, rect)
    
 # plot style 
-        if style == 'smapstyle':
-             for p in [plot,oplot]:
+        plot.toolbar.logo=None
+        oplot.toolbar.logo=None
+        if style == 'smapstyle':plist=[plot,oplot]
+        else: plist=[oplot]
+        for p in plist:
                  p.xgrid.grid_line_color = None
                  p.ygrid.grid_line_color = None
                  p.xaxis[0].ticker=FixedTicker(ticks=[])
@@ -220,7 +223,6 @@ class smap:
                  p.yaxis.axis_line_width = 0
                  p.yaxis.axis_line_color = "white"
                  p.yaxis.axis_line_alpha = 0
-                 p.toolbar.logo=None
 # table
         if table:
              tcolumns=[TableColumn(field='id' ,title='id',formatter=NumberFormatter(format='0'))]

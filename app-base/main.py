@@ -32,7 +32,7 @@ from bokeh.plotting import figure
 
 
 def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10,jmol_settings=""):
-    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix,periodic_checkbox,pss,frac
+    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix,periodic_checkbox,pss,frac,alphas,grid
     appname=app_name
     server_prefix=server_static_root
     ps=pointsize
@@ -61,8 +61,11 @@ def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10
     else:    
       ccol = Select(title='Color', value='None', options=roptions,width=50)
     ccol.on_change('value', update)
-    periodic_checkbox=CheckboxGroup(labels=["Periodic Color Palette"], active=[])
+    periodic_checkbox=CheckboxGroup(labels=["Periodic Palette"], active=[])
     periodic_checkbox.on_change('active',update)
+
+    grid=CheckboxGroup(labels=["Show Axis"], active=[0])
+    grid.on_change('active',update)
 
     plt_name = Select(title='Palette',width=50, value='Inferno256', options=["Magma256","Plasma256","Spectral6","Inferno256","Viridis256","Greys256"])
     plt_name.on_change('value', update)
@@ -70,18 +73,23 @@ def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10
     pss= Slider(start=0, end=50, value=ps, step=1,callback_policy='mouseup', title="Point Size", width=150)
     pss.on_change('value',update)
 
-    frac= Slider(start=0, end=1, value=0.5, step=0.1,callback_policy='mouseup', title="Fraction Of Data Loaded", width=300)
+    frac= Slider(start=0, end=1, value=min(1.0,round(3000./n,1)), step=0.1,callback_policy='mouseup', title="Fraction Of Data Loaded", width=200)
     frac.on_change('value',update)
+
+    alphas= Slider(start=0, end=1, value=0.75, step=0.1,callback_policy='mouseup', title="Point Alpha", width=150)
+    alphas.on_change('value',update)
 
     xm=widgetbox(xcol,width=210,sizing_mode='fixed')
     ym=widgetbox(ycol,width=210,sizing_mode='fixed')
     cm=widgetbox(ccol,width=210,sizing_mode='fixed')
-    cp=widgetbox(periodic_checkbox,width=200,sizing_mode='fixed')
+    cp=widgetbox(periodic_checkbox,width=100,sizing_mode='fixed')
+    gc=widgetbox(grid,width=100,sizing_mode='fixed')
     rm=widgetbox(rcol,width=210,sizing_mode='fixed')
     pm=widgetbox(plt_name,width=210,sizing_mode='fixed')
-    psw=widgetbox(pss,width=280,height=50,sizing_mode='fixed')
-    fw=widgetbox(frac,width=380,height=50,sizing_mode='fixed')
-    controls = Column(Row(xm, ym, cm,rm, pm, width=1050, sizing_mode='scale_width'),Row(fw,cp,psw,width=800,sizing_mode='fixed'))
+    psw=widgetbox(pss,width=210,height=50,sizing_mode='fixed')
+    asl=widgetbox(alphas,width=210,height=50,sizing_mode='fixed')
+    fw=widgetbox(frac,width=270,height=50,sizing_mode='fixed')
+    controls = Column(Row(xm, ym, cm,rm, pm, width=1050, sizing_mode='scale_width'),Row(gc,fw,psw,asl,cp, width=1050,sizing_mode='fixed'))
 
 # create plot and slider
 
@@ -118,7 +126,9 @@ def create_plot():
 # Set up main plot
     Periodic_color=False
     if len(periodic_checkbox.active)>0: Periodic_color=True
-    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=pss.value,minps=pss.value/2.0,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_height=170,Periodic_color=Periodic_color,return_datasrc=True,frac_load=frac.value)
+    style='smapstyle'
+    if len(grid.active)>0: style=None
+    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=pss.value,minps=pss.value/2.0,alpha=alphas.value,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_height=170,Periodic_color=Periodic_color,return_datasrc=True,frac_load=frac.value,style=style)
 
 # Set up mouse selection callbacks
 
@@ -137,7 +147,7 @@ def create_plot():
           return Math.min.apply(null, this);
           };
        var inds =ind%s;
-       var idx =plotdata['id'][inds];
+       var idx = %s; //plotdata['id'][inds];
        console.log(inds);
        var xs = refdata['x'][inds];
        var ys = refdata['y'][inds];
@@ -162,14 +172,14 @@ def create_plot():
     iold=0  
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
-    slider = Slider(start=0, end=n-1, value=0, step=1, title="Strucutre id", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,server_prefix,appname))
+    slider = Slider(start=0, end=n-1, value=0, step=1, title="Structure id", width=400)
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("cb_obj.value",".toFixed(0)","inds","",jmolsettings,server_prefix,appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("plotsrc.selected['1d'].indices",".min()","slider.value=idx",jmolsettings,server_prefix,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("plotsrc.selected['1d'].indices",".min()","plotdata['id'][inds]","slider.value=idx",jmolsettings,server_prefix,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
   #  p1.add_tools(HoverTool(tooltips=None, callback=callback)) #test
@@ -183,7 +193,7 @@ def create_plot():
 
 # layout stuffs 
     spacer1 = Spacer(width=200, height=0)
-    spacer2 = Spacer(width=200, height=170)
+    spacer2 = Spacer(width=200, height=190)
     indx=0
     xval=cv.pd[xcol.value][indx]
     yval=cv.pd[ycol.value][indx]
@@ -194,9 +204,9 @@ def create_plot():
 
 # create buttons 
     play_widget,download_widget=create_buttons()
-    playpanel=Row(play_widget,Spacer(width=30),slider_widget)
+    playpanel=Row(Spacer(width=30),play_widget,Spacer(width=30),slider_widget)
     plotpanel=Row(Column(p1,Spacer(height=40),Row(Spacer(width=10,height=40),
-                                                     download_widget)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=50),table))
+                                                     download_widget)),Column(spacer1,p2,spacer2,playpanel,Spacer(height=10),table))
     
     return plotpanel
 
@@ -213,7 +223,11 @@ def download_extended():
     
     global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname,server_prefix,Periodic_color
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value 
-    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='',Periodic_color=Periodic_color,return_datasrc=True,frac_load=frac.value)
+    Periodic_color=False
+    style='smapstyle'
+    if len(grid.active)>0: style=None
+    if len(periodic_checkbox.active)>0: Periodic_color=True 
+    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=pss.value,minps=pss.value/2.,alpha=alphas.value,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='',Periodic_color=Periodic_color,return_datasrc=True,frac_load=frac.value,style=style)
     # Set up mouse selection callbacks
 
 
@@ -305,7 +319,8 @@ def download_extended():
     #print TEMPLATE_FILE
     template = templateEnv.get_template( TEMPLATE_FILE )
     html = template.render(js_resources=js,div=tag,jmolsettings=jmolsettings,appname=appname,server_prefix='.',css_files=css,title=title)
-    fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value 
+    fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value+'-'+plt_name.value+'-f'+str(frac.value)+'-ps'+str(pss.value)+'a'+str(alphas.value)
+    if Periodic_color: fbase=fbase+'_Periodic'
     fname=os.path.join(server_prefix,'static',fbase+'.html')
     zname=os.path.join(server_prefix,'static',fbase+'.zip')
  #   fname=fbase+'.html'
@@ -329,7 +344,7 @@ def download_extended():
            window.open("%s",title="%s");
            """ % (zname,fbase))
  
-def download_simple():
+def create_download_simple():
     from bokeh.io import output_file,show
     from bokeh.resources import CDN
     from bokeh.embed import file_html
@@ -339,10 +354,14 @@ def download_simple():
 #    from jinja2 import Template
     import jinja2
 
-    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,server_prefix
+    global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,server_prefix,Periodic_color,frac,alphas,pss
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value
-    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,
-                              minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=300,title='')
+    Periodic_color=False
+    style='smapstyle'
+    if len(grid.active)>0: style=None
+    if len(periodic_checkbox.active)>0: Periodic_color=True 
+    p1,p2,table=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=pss.value,
+                              minps=pss.value/2.,alpha=alphas.value,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=300,title='',Periodic_color=Periodic_color,frac_load=frac.value,style=style)
     spacer1 = Spacer(width=200, height=10)
     spacer2 = Spacer(width=200, height=20)
     plotpanel_static=Row(p1,Column(spacer1,Row(Spacer(width=200),p2),spacer2,table))
@@ -355,8 +374,10 @@ def download_simple():
     template = templateEnv.get_template( TEMPLATE_FILE )
     html = template.render(js_resources=js,div=tag,appname=appname,title=title,server_prefix=server_prefix)
 #    html = file_html(plotpanel_static, CDN, "my plot")
-    fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value
+    fbase=appname+'-sketchmap_'+xcol.value+'-'+ycol.value+'-'+ccol.value+'-'+rcol.value+'-'+plt_name.value+'-f'+str(frac.value)+'-ps'+str(pss.value)+'a'+str(alphas.value)
+    if Periodic_color: fbase=fbase+'_Periodic'
     fname=os.path.join(server_prefix,'static',fbase+'-minimal.html')
+#    if (os.path.isfile(fname)): os.remove(fname)
     if (sys.version_info[0] <3):
              f=open(fname,'w')   #python 2.7
     else:
@@ -364,9 +385,12 @@ def download_simple():
 
     f.write(html.encode("utf-8"))
     f.close()
+    return fname,fbase
+
+def download_simple():
     return CustomJS(code="""        
            window.open("%s",title="%s");
-           """ % (fname,fbase))   
+           """ % (create_download_simple()))   
 
 def animate_update():
     global indx,n
