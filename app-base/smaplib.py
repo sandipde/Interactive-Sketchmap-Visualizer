@@ -74,7 +74,7 @@ class smap:
     	v=v/norm
     	return v-min(v)
 
-    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,add_colorbar=True,Periodic_color=False,return_datasrc=False,**kwargs):
+    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,add_colorbar=True,Periodic_color=False,return_datasrc=False,frac_load=1.0,**kwargs):
         from bokeh.layouts import row, widgetbox,column,Spacer
         from bokeh.models import HoverTool,TapTool,FixedTicker,Circle,WheelZoomTool
         from bokeh.models import CustomJS, Slider,Rect,ColorBar,HoverTool,LinearColorMapper, BasicTicker
@@ -86,7 +86,13 @@ class smap:
         from bokeh.models.widgets import DataTable,TableColumn,NumberFormatter,Div
         import pandas as pd
 #        if (title==''): title=self.name
-        data=self.pd
+        fulldata=self.pd
+        idx=np.arange(len(fulldata))
+        fulldata['id']=idx 
+        nload=int(frac_load*len(fulldata))
+        np.random.shuffle(idx)
+        idload=np.sort(idx[0:nload])
+        data=self.pd.iloc[idload]
         COLORS=locals()[palette]
        # TOOLS="resize,crosshair,pan,wheel_zoom,reset,tap,save,box_select,box_zoom,lasso_select"
         TOOLS="pan,reset,tap,save,box_zoom,lasso_select"
@@ -94,11 +100,10 @@ class smap:
         if Hover :
              proplist=[]
              for prop in data.columns:
-                 if prop not in ["CV1","CV2","Cv1","Cv2","cv1","cv2","colors","radii"]: proplist.append((prop,'@'+prop))
+                 if prop not in ["CV1","CV2","Cv1","Cv2","cv1","cv2","colors","radii","id"]: proplist.append((prop,'@'+prop))
              hover = HoverTool(names=["mycircle"],
                      tooltips=[
-                         ("index", "$index"),
-                         ("(x,y)", "($x, $y)")
+                         ("id", '@id')
                      ]
                  )
              for prop in proplist:
@@ -218,9 +223,9 @@ class smap:
                  p.toolbar.logo=None
 # table
         if table:
-             tcolumns=[]
+             tcolumns=[TableColumn(field='id' ,title='id',formatter=NumberFormatter(format='0'))]
              for prop in data.columns:
-                if prop not in ["CV1","CV2","Cv1","Cv2","cv1","cv2","colors"]: #,"radii"]: 
+                if prop not in ["CV1","CV2","Cv1","Cv2","cv1","cv2","colors",'id',"radii"]: 
                   if data[prop].dtype == 'object': tcolumns.append(TableColumn(field=prop ,title=prop))
                   if data[prop].dtype == 'float64': tcolumns.append(TableColumn(field=prop ,title=prop,formatter=NumberFormatter(format='0.00')))
                   if data[prop].dtype == 'int64': tcolumns.append(TableColumn(field=prop ,title=prop,formatter=NumberFormatter(format='0')))

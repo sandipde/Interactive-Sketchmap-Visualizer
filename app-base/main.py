@@ -32,7 +32,7 @@ from bokeh.plotting import figure
 
 
 def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10,jmol_settings=""):
-    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix,periodic_checkbox
+    global cv,controls,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,ps,jmolsettings,appname,lay,server_prefix,periodic_checkbox,pss,frac
     appname=app_name
     server_prefix=server_static_root
     ps=pointsize
@@ -61,18 +61,27 @@ def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10
     else:    
       ccol = Select(title='Color', value='None', options=roptions,width=50)
     ccol.on_change('value', update)
-    periodic_checkbox=CheckboxGroup(labels=["Periodic"], active=[])
+    periodic_checkbox=CheckboxGroup(labels=["Periodic Color Palette"], active=[])
     periodic_checkbox.on_change('active',update)
 
     plt_name = Select(title='Palette',width=50, value='Inferno256', options=["Magma256","Plasma256","Spectral6","Inferno256","Viridis256","Greys256"])
     plt_name.on_change('value', update)
+
+    pss= Slider(start=0, end=50, value=ps, step=1,callback_policy='mouseup', title="Point Size", width=150)
+    pss.on_change('value',update)
+
+    frac= Slider(start=0, end=1, value=0.5, step=0.1,callback_policy='mouseup', title="Fraction Of Data Loaded", width=300)
+    frac.on_change('value',update)
+
     xm=widgetbox(xcol,width=210,sizing_mode='fixed')
     ym=widgetbox(ycol,width=210,sizing_mode='fixed')
-    cm=widgetbox(ccol,width=140,sizing_mode='fixed')
-    cp=widgetbox(periodic_checkbox,width=110,sizing_mode='fixed')
+    cm=widgetbox(ccol,width=210,sizing_mode='fixed')
+    cp=widgetbox(periodic_checkbox,width=200,sizing_mode='fixed')
     rm=widgetbox(rcol,width=210,sizing_mode='fixed')
     pm=widgetbox(plt_name,width=210,sizing_mode='fixed')
-    controls = Row(xm, ym, cm,cp,rm, pm, width=1050, sizing_mode='scale_width')
+    psw=widgetbox(pss,width=280,height=50,sizing_mode='fixed')
+    fw=widgetbox(frac,width=380,height=50,sizing_mode='fixed')
+    controls = Column(Row(xm, ym, cm,rm, pm, width=1050, sizing_mode='scale_width'),Row(fw,cp,psw,width=800,sizing_mode='fixed'))
 
 # create plot and slider
 
@@ -105,11 +114,11 @@ def create_buttons():
     
     
 def create_plot():
-    global cv,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,controls,ps,jmolsettings,Periodic_color
+    global cv,selectsrc,columns,button,slider,n,xcol,ycol,ccol,rcol,plt_name,indx,controls,ps,jmolsettings,Periodic_color,pss,frac
 # Set up main plot
     Periodic_color=False
     if len(periodic_checkbox.active)>0: Periodic_color=True
-    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=ps,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_height=170,Periodic_color=Periodic_color,return_datasrc=True)
+    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=pss.value,minps=pss.value/2.0,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_height=170,Periodic_color=Periodic_color,return_datasrc=True,frac_load=frac.value)
 
 # Set up mouse selection callbacks
 
@@ -122,11 +131,13 @@ def create_plot():
     code="""
        var refdata = ref.data;
        var data = source.data;
+       var plotdata=plotsrc.data;
        var ind = %s ;
        Array.prototype.min = function() {
           return Math.min.apply(null, this);
           };
        var inds =ind%s;
+       var idx =plotdata['id'][inds];
        console.log(inds);
        var xs = refdata['x'][inds];
        var ys = refdata['y'][inds];
@@ -135,7 +146,7 @@ def create_plot():
        data=refdata[inds];
        source.change.emit();
        %s;
-       var str = "" + inds;
+       var str = "" + idx;
        var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
@@ -143,7 +154,7 @@ def create_plot():
        location.href=file;
        localStorage.setItem("indexref",indx);
        document.getElementById("p1").innerHTML = " Selected frame:"+ indx ;
-       document.getElementById("info").innerHTML = "Complete Selection: " + ind  ;
+       //document.getElementById("info").innerHTML = "Complete Selection: " + plotdata['id'][ind]  ;
        """ 
 
 # Set up Slider
@@ -151,14 +162,14 @@ def create_plot():
     iold=0  
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
-    slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,server_prefix,appname))
+    slider = Slider(start=0, end=n-1, value=0, step=1, title="Strucutre id", width=400)
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,server_prefix,appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotdata=plotdatasrc), code=code%("plotdata.selected['1d'].indices",".min()","slider.value=inds",jmolsettings,server_prefix,appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("plotsrc.selected['1d'].indices",".min()","slider.value=idx",jmolsettings,server_prefix,appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
   #  p1.add_tools(HoverTool(tooltips=None, callback=callback)) #test
@@ -171,7 +182,7 @@ def create_plot():
 
 
 # layout stuffs 
-    spacer1 = Spacer(width=200, height=10)
+    spacer1 = Spacer(width=200, height=0)
     spacer2 = Spacer(width=200, height=170)
     indx=0
     xval=cv.pd[xcol.value][indx]
@@ -202,7 +213,7 @@ def download_extended():
     
     global cv,indx,controls,selectsrc,xval,yval,plt_name,xcol,ycol,ccol,rcol,jmolsettings,appname,server_prefix,Periodic_color
     title='Sketchmap for '+appname+ ': Colored with '+ ccol.value + ' Point Size Variation: '+rcol.value 
-    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='',Periodic_color=Periodic_color,return_datasrc=True)
+    p1,p2,table,plotdatasrc=cv.bkplot(xcol.value,ycol.value,ccol.value,radii=rcol.value,palette=plt_name.value,ps=10,minps=4,alpha=0.6,pw=700,ph=600,Hover=True,toolbar_location="above",table=True,table_width=550, table_height=400,title='',Periodic_color=Periodic_color,return_datasrc=True,frac_load=frac.value)
     # Set up mouse selection callbacks
 
 
@@ -212,11 +223,13 @@ def download_extended():
     code="""
        var refdata = ref.data;
        var data = source.data;
+       var plotdata=plotsrc.data;
        var ind = %s ;
        Array.prototype.min = function() {
           return Math.min.apply(null, this);
           };
        var inds =ind%s;
+       var idx=plotdata['id'][inds];
        var xs = refdata['x'][inds];
        var ys = refdata['y'][inds];
        data['xs'] = [xs];
@@ -224,7 +237,7 @@ def download_extended():
        data=refdata[inds];
        source.change.emit();
        %s;
-       var str = "" + inds;
+       var str = "" + idx;
        var pad = "000000";
        var indx = pad.substring(0, pad.length - str.length) + str;
        var settings= "%s" ; 
@@ -241,13 +254,13 @@ def download_extended():
     selectsrc=ColumnDataSource({'xs': [cv.pd[xcol.value][iold]], 'ys': [cv.pd[ycol.value][iold]]})
     refsrc=ColumnDataSource({'x':cv.pd[xcol.value], 'y':cv.pd[ycol.value]})
     slider = Slider(start=0, end=n-1, value=0, step=1, title="Primary Selection", width=400)
-    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,'.',appname))
+    slider_callback=CustomJS(args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("cb_obj.value",".toFixed(0)","",jmolsettings,'.',appname))
     slider.js_on_change('value', slider_callback)
     slider.on_change('value', slider_update)
 
 #set up mouse
     callback=CustomJS(
-         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("plotsrc.selected['1d'].indices",".min()","slider.value=inds",jmolsettings,'.',appname))
+         args=dict(source=selectsrc, ref=refsrc,slider=slider,plotsrc=plotdatasrc), code=code%("plotsrc.selected['1d'].indices",".min()","slider.value=idx",jmolsettings,'.',appname))
     taptool = p1.select(type=TapTool)
     taptool.callback = callback
     p1.circle('xs', 'ys', source=selectsrc, fill_alpha=0.9, fill_color="blue",line_color='black',line_width=1, size=15,name="selectcircle")
