@@ -74,7 +74,7 @@ class smap:
     	v=v/norm
     	return v-min(v)
 
-    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,add_colorbar=True,Periodic_color=False,return_datasrc=False,frac_load=1.0,marker=['circle'],**kwargs):
+    def bkplot(self,x,y,color='None',radii='None',ps=20,minps=0,alpha=0.8,pw=600,ph=400,palette='Inferno256',style='smapstyle',Hover=True,title='',table=False,table_width=600, table_height=150,add_colorbar=True,Periodic_color=False,return_datasrc=False,frac_load=1.0,marker=['circle'],seed=0,**kwargs):
         from bokeh.layouts import row, widgetbox,column,Spacer
         from bokeh.models import HoverTool,TapTool,FixedTicker,Circle,WheelZoomTool
         from bokeh.models import CustomJS, Slider,Rect,ColorBar,HoverTool,LinearColorMapper, BasicTicker
@@ -91,6 +91,7 @@ class smap:
         idx=np.arange(len(fulldata))
         fulldata['id']=idx 
         nload=int(frac_load*len(fulldata))
+        np.random.seed(seed)
         np.random.shuffle(idx)
         idload=np.sort(idx[0:nload])
         data=self.pd.iloc[idload].copy()
