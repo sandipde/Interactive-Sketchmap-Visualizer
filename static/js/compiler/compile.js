@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const path = require("path");
 const ts = require("typescript");
-const coffee = require("coffee-script");
+const coffee = require("coffeescript");
 const detective = require("detective");
 const less = require("less");
 const yargs_1 = require("yargs");
@@ -90,8 +90,6 @@ const compile_and_resolve_deps = (input) => {
             noImplicitAny: false,
             target: ts.ScriptTarget.ES5,
             module: ts.ModuleKind.CommonJS,
-            jsx: ts.JsxEmit.React,
-            reactNamespace: "DOM",
         },
     });
     if (result.diagnostics != null && result.diagnostics.length > 0) {

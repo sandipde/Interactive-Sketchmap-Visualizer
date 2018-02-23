@@ -1817,9 +1817,6 @@ textarea.bk-root .bk-widget-form-input {
 .bk-root .bk-bs-nav-tabs {
   overflow: hidden;
 }
-.bk-root .bk-bs-tab-pane {
-  float: left;
-}
 .bk-root .bk-slider label {
   margin-right: 5px;
 }
