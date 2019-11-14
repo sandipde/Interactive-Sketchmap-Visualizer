@@ -78,7 +78,7 @@ def bkapp(dfile,pcol,app_name,server_static_root,title='Sketch-map',pointsize=10
     pss= Slider(start=0, end=50, value=ps, step=1,callback_policy='mouseup', title="Point Size", width=150)
     pss.on_change('value',update)
 
-    frac= Slider(start=0, end=1, value=min(1.0,round(3000./n,1)), step=0.1,callback_policy='mouseup', title="Fraction Of Data Loaded", width=200)
+    frac= Slider(start=0, end=1, value=1.0, step=0.1,callback_policy='mouseup', title="Fraction Of Data Loaded", width=200)
     frac.on_change('value',update)
 
     alphas= Slider(start=0, end=1, value=0.75, step=0.1,callback_policy='mouseup', title="Point Alpha", width=150)
